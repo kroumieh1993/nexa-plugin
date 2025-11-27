@@ -12,22 +12,23 @@ class Nexa_RE_Shortcodes {
 
     public static function render_properties( $atts = [] ) {
         $atts = shortcode_atts( [
-            'city'         => '',
-            'category'     => '',
-            'property_type'=> '',
-            'min_price'    => '',
-            'max_price'    => '',
-            'per_page'     => '10',
+            'city'          => '',
+            'category'      => '',
+            'property_type' => '',
+            'min_price'     => '',
+            'max_price'     => '',
+            'per_page'      => '10',
         ], $atts, 'nexa_properties' );
 
-        $api_url   = rtrim( get_option( Nexa_RE_Settings::OPTION_API_URL ), '/' );
-        $api_token = get_option( Nexa_RE_Settings::OPTION_API_TOKEN );
+        // Fixed API URL
+        $api_url   = rtrim( Nexa_RE_Settings::API_BASE_URL, '/' );
+        $api_token = trim( get_option( Nexa_RE_Settings::OPTION_API_TOKEN, '' ) );
 
-        if ( ! $api_url || ! $api_token ) {
+        if ( empty( $api_token ) ) {
             if ( current_user_can( 'manage_options' ) ) {
-                return '<p><strong>Nexa Real Estate:</strong> please configure API URL and token in Settings → Nexa Real Estate.</p>';
+                return '<p><strong>Nexa Real Estate:</strong> please configure your Agency API Token in Settings → Nexa Real Estate.</p>';
             }
-            return ''; // hide from normal visitors
+            return '';
         }
 
         $endpoint = $api_url . '/properties';
@@ -72,7 +73,7 @@ class Nexa_RE_Shortcodes {
 
         $data = json_decode( $body, true );
 
-        // If you’re paginating in Laravel, properties will likely be under ["data"]
+        // If Laravel uses pagination, we expect ["data"]; otherwise use whole array
         $properties = $data['data'] ?? $data;
 
         if ( empty( $properties ) ) {
