@@ -383,13 +383,15 @@
 
     .nexa-input,
     .nexa-textarea {
-        width:100%;
-        border-radius:10px;
-        border:1px solid var(--nexa-border-subtle);
-        padding:7px 9px;
-        font-size:12px;
-        background:#fff;
+        width: 100%;
+        border-radius: 8px;
+        padding: 8px 10px;
+        font-size: 13px;
+        border: 1px solid #d1d5db !important;
+        background: #ffffff !important;
+        box-shadow: none !important;
     }
+
 
     .nexa-textarea {
         resize: vertical;
@@ -459,20 +461,24 @@
     }
 
     .nexa-tab-btn {
-        border:none;
-        background:transparent;
-        font-size:12px;
-        padding:6px 10px;
-        border-radius:999px;
-        cursor:pointer;
-        color:var(--nexa-text-muted);
+        border: none;
+        background: transparent;
+        font-size: 14px;
+        padding: 10px 16px;
+        border-radius: 999px;
+        cursor: pointer;
+        color: var(--nexa-text-muted);
+        font-weight: 500;
     }
 
+
     .nexa-tab-active {
-        background:var(--nexa-primary-soft);
-        color:var(--nexa-primary);
-        font-weight:500;
+        background: var(--nexa-primary);
+        color: #fff;
+        font-weight: 600;
+        box-shadow: 0 2px 6px rgba(79,70,229,0.25);
     }
+
 
     .nexa-tab-disabled {
         opacity:0.35;
