@@ -8,6 +8,7 @@ class Nexa_RE_Shortcodes {
 
     public static function register_shortcodes() {
         add_shortcode( 'nexa_properties', [ __CLASS__, 'render_properties' ] );
+        add_shortcode( 'nexa_agency_dashboard', [ __CLASS__, 'render_agency_dashboard' ] );
     }
 
     public static function render_properties( $atts = [] ) {
@@ -537,4 +538,283 @@ class Nexa_RE_Shortcodes {
         <?php
         return ob_get_clean();
     }
+
+    public static function render_agency_dashboard( $atts = [] ) {
+        if ( ! is_user_logged_in() ) {
+            return '<p>You must be logged in to access your agency dashboard. <a href="' . esc_url( wp_login_url( get_permalink() ) ) . '">Log in</a></p>';
+        }
+
+        if ( ! current_user_can( 'manage_nexa_properties' ) ) {
+            return '<p>You do not have permission to access this dashboard.</p>';
+        }
+
+        // Get API URL + token
+        $api_url   = rtrim( Nexa_RE_Settings::API_BASE_URL, '/' );
+        $api_token = trim( get_option( Nexa_RE_Settings::OPTION_API_TOKEN, '' ) );
+        $messages  = [];
+        if ( ! $api_token ) {
+            return '<p><strong>Nexa:</strong> Agency API token is not configured. Contact your site administrator.</p>';
+        }
+
+        // 1) Handle POST actions (create / update)
+        // 2) Handle GET actions (delete) with nonce
+        // 3) Fetch properties and stats from API
+        // 4) Render dashboard HTML (sidebar + cards + table + forms)
+
+        /* --------- Handle delete (GET) --------- */
+        if ( isset( $_GET['nexa_action'], $_GET['property_id'] ) && $_GET['nexa_action'] === 'delete_property' ) {
+            $property_id = (int) $_GET['property_id'];
+
+            if ( ! wp_verify_nonce( $_GET['_wpnonce'] ?? '', 'nexa_delete_property_' . $property_id ) ) {
+                $messages[] = [ 'type' => 'error', 'text' => 'Security check failed.' ];
+            } else {
+                $endpoint = $api_url . '/properties/' . $property_id;
+
+                $response = wp_remote_request( $endpoint, [
+                    'method'  => 'DELETE',
+                    'headers' => [
+                        'X-AGENCY-TOKEN' => $api_token,
+                        'Accept'         => 'application/json',
+                    ],
+                    'timeout' => 15,
+                ] );
+
+                if ( is_wp_error( $response ) ) {
+                    $messages[] = [ 'type' => 'error', 'text' => 'Error deleting property: ' . $response->get_error_message() ];
+                } else {
+                    $code = wp_remote_retrieve_response_code( $response );
+                    if ( 200 === $code ) {
+                        $messages[] = [ 'type' => 'success', 'text' => 'Property deleted.' ];
+                    } else {
+                        $messages[] = [ 'type' => 'error', 'text' => 'API error (' . $code . ') deleting property.' ];
+                    }
+                }
+            }
+        }
+
+        /* --------- Handle create/update (POST) --------- */
+        if ( isset( $_POST['nexa_action'] ) && $_POST['nexa_action'] === 'save_property' ) {
+            if ( ! wp_verify_nonce( $_POST['nexa_property_nonce'] ?? '', 'nexa_save_property_front' ) ) {
+                $messages[] = [ 'type' => 'error', 'text' => 'Security check failed.' ];
+            } else {
+                $property_id = isset( $_POST['property_id'] ) ? (int) $_POST['property_id'] : 0;
+                $is_edit     = $property_id > 0;
+
+                $payload = [
+                    'title'         => sanitize_text_field( $_POST['title'] ?? '' ),
+                    'description'   => wp_kses_post( $_POST['description'] ?? '' ),
+                    'category'      => sanitize_text_field( $_POST['category'] ?? '' ),
+                    'city'          => sanitize_text_field( $_POST['city'] ?? '' ),
+                    'property_type' => sanitize_text_field( $_POST['property_type'] ?? '' ),
+                    'area'          => $_POST['area'] !== '' ? (int) $_POST['area'] : null,
+                    'address'       => sanitize_text_field( $_POST['address'] ?? '' ),
+                    'price'         => $_POST['price'] !== '' ? (int) $_POST['price'] : null,
+                    'bedrooms'      => $_POST['bedrooms'] !== '' ? (int) $_POST['bedrooms'] : null,
+                    'bathrooms'     => $_POST['bathrooms'] !== '' ? (int) $_POST['bathrooms'] : null,
+                ];
+
+                $images = [];
+                if ( ! empty( $_POST['images'] ) && is_array( $_POST['images'] ) ) {
+                    foreach ( $_POST['images'] as $url ) {
+                        $url = esc_url_raw( $url );
+                        if ( $url ) {
+                            $images[] = $url;
+                        }
+                    }
+                }
+                $payload['images'] = $images;
+
+                $args = [
+                    'headers' => [
+                        'X-AGENCY-TOKEN' => $api_token,
+                        'Accept'         => 'application/json',
+                        'Content-Type'   => 'application/json',
+                    ],
+                    'body'    => wp_json_encode( $payload ),
+                    'timeout' => 15,
+                ];
+
+                if ( $is_edit ) {
+                    $endpoint     = $api_url . '/properties/' . $property_id;
+                    $args['method'] = 'PUT';
+                    $response     = wp_remote_request( $endpoint, $args );
+                } else {
+                    $endpoint     = $api_url . '/properties';
+                    $response     = wp_remote_post( $endpoint, array_merge( $args, [ 'method' => 'POST' ] ) );
+                }
+
+                if ( is_wp_error( $response ) ) {
+                    $messages[] = [ 'type' => 'error', 'text' => 'Error saving property: ' . $response->get_error_message() ];
+                } else {
+                    $code = wp_remote_retrieve_response_code( $response );
+                    if ( in_array( $code, [ 200, 201 ], true ) ) {
+                        $messages[] = [ 'type' => 'success', 'text' => 'Property saved successfully.' ];
+                    } else {
+                        $messages[] = [ 'type' => 'error', 'text' => 'API error (' . $code . ') saving property.' ];
+                    }
+                }
+            }
+        }
+
+
+        // Fetch properties for list & stats
+        $endpoint = $api_url . '/properties';
+        $response = wp_remote_get( $endpoint, [
+            'headers' => [
+                'X-AGENCY-TOKEN' => $api_token,
+                'Accept'         => 'application/json',
+            ],
+            'timeout' => 15,
+        ] );
+
+        $properties = [];
+        if ( ! is_wp_error( $response ) && 200 === wp_remote_retrieve_response_code( $response ) ) {
+            $data       = json_decode( wp_remote_retrieve_body( $response ), true );
+            $properties = $data['data'] ?? $data;
+            if ( ! is_array( $properties ) ) {
+                $properties = [];
+            }
+        }
+
+        // Compute some quick stats
+        $total_properties = count( $properties );
+        $properties_this_week = 0;
+        $now  = current_time( 'timestamp' );
+        $week_start = strtotime( 'monday this week', $now );
+
+        foreach ( $properties as $p ) {
+            if ( ! empty( $p['created_at'] ) && strtotime( $p['created_at'] ) >= $week_start ) {
+                $properties_this_week++;
+            }
+        }
+
+
+
+
+        ob_start();
+
+        ?>
+        <div class="nexa-agency-shell">
+            <div class="nexa-agency-sidebar">
+                <div class="nexa-agency-logo">Nexa</div>
+                <nav>
+                    <a class="active">Dashboard</a>
+                    <a>Properties</a>
+                    <!-- future items -->
+                </nav>
+            </div>
+
+            <div class="nexa-agency-main">
+                <header class="nexa-agency-topbar">
+                    <div class="title">Agency Dashboard</div>
+                    <div class="user">
+                        <?php $user = wp_get_current_user(); ?>
+                        <span class="avatar"><?php echo esc_html( strtoupper( mb_substr( $user->display_name, 0, 1 ) ) ); ?></span>
+                        <span class="name"><?php echo esc_html( $user->display_name ); ?></span>
+                    </div>
+                </header>
+
+                <?php foreach ( $messages as $msg ) : ?>
+                    <div class="nexa-banner nexa-banner-<?php echo esc_attr( $msg['type'] ); ?>">
+                        <?php echo esc_html( $msg['text'] ); ?>
+                    </div>
+                <?php endforeach; ?>
+
+                <section class="nexa-agency-cards">
+                    <div class="card">
+                        <div class="label">Total Properties</div>
+                        <div class="value"><?php echo esc_html( $total_properties ); ?></div>
+                    </div>
+                    <div class="card">
+                        <div class="label">This Week</div>
+                        <div class="value"><?php echo esc_html( $properties_this_week ); ?></div>
+                    </div>
+                    <!-- you can add more cards later -->
+                </section>
+
+                <section class="nexa-agency-properties">
+                    <div class="nexa-properties-header">
+                        <h2>Your Properties</h2>
+                        <button class="nexa-btn" id="nexa-open-property-form">Add New</button>
+                    </div>
+
+                    <!-- properties table or grid -->
+                    <!-- e.g. simple table for now -->
+                    <table class="nexa-properties-table">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>City</th>
+                                <th>Category</th>
+                                <th>Price</th>
+                                <th style="width:140px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if ( empty( $properties ) ) : ?>
+                                <tr><td colspan="5">No properties yet.</td></tr>
+                            <?php else : ?>
+                                <?php foreach ( $properties as $p ) : ?>
+                                    <?php
+                                    $delete_url = wp_nonce_url(
+                                        add_query_arg(
+                                            [
+                                                'nexa_action' => 'delete_property',
+                                                'property_id' => intval( $p['id'] ),
+                                            ],
+                                            get_permalink()
+                                        ),
+                                        'nexa_delete_property_' . intval( $p['id'] )
+                                    );
+                                    ?>
+                                    <tr>
+                                        <td><?php echo esc_html( $p['title'] ?? '' ); ?></td>
+                                        <td><?php echo esc_html( $p['city'] ?? '' ); ?></td>
+                                        <td><?php echo esc_html( ucfirst( $p['category'] ?? '' ) ); ?></td>
+                                        <td><?php echo isset( $p['price'] ) ? esc_html( number_format_i18n( $p['price'] ) ) : '—'; ?></td>
+                                        <td>
+                                            <!-- for now: only delete; edit can be added later -->
+                                            <a href="<?php echo esc_url( $delete_url ); ?>" onclick="return confirm('Delete this property?');">Delete</a>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </section>
+
+                <!-- Property form (can be slide-over or modal) -->
+                <!-- for now: simple collapsible form -->
+                <section class="nexa-agency-form" id="nexa-property-form" style="display:none;">
+                    <h2>Create / Edit Property</h2>
+                    <form method="post">
+                        <?php wp_nonce_field( 'nexa_save_property_front', 'nexa_property_nonce' ); ?>
+                        <input type="hidden" name="nexa_action" value="save_property">
+                        <input type="hidden" name="property_id" id="nexa-property-id" value="">
+
+                        <!-- title, description, etc. plus hidden images[] fields populated via JS+media library (we already wrote that logic for admin) -->
+
+                        <!-- you can re-use exactly the same fields from the WP-admin form I gave earlier -->
+                    </form>
+                </section>
+            </div>
+        </div>
+
+        <style>
+        /* here you mimic your Laravel admin styles: sidebar, top bar, cards, etc. */
+        </style>
+
+        <script>
+        /* JS to toggle the property form, open media library to pick images, etc. */
+        </script>
+        <?php
+
+
+
+        // We’ll fill these in next steps
+        // echo '<div class="nexa-agency-dashboard">...</div>';
+
+        return ob_get_clean();
+    }
+
 }
