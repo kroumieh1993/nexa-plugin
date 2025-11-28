@@ -16,6 +16,9 @@ define( 'NEXA_RE_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
 require_once NEXA_RE_PLUGIN_DIR . 'includes/class-nexa-settings.php';
 require_once NEXA_RE_PLUGIN_DIR . 'includes/class-nexa-shortcodes.php';
+require_once plugin_dir_path( __FILE__ ) . 'includes/class-nexa-admin.php';
+Nexa_RE_Admin::init();
+
 
 class Nexa_Real_Estate_Plugin {
 
