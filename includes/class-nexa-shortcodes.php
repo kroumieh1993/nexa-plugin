@@ -662,6 +662,12 @@ class Nexa_RE_Shortcodes {
 
         $current_user = wp_get_current_user();
 
+
+        // Needed for image picker (gallery) in frontend form
+        if ( function_exists( 'wp_enqueue_media' ) ) {
+            wp_enqueue_media();
+        }
+
         ob_start();
         // variables are already in scope: $messages, $properties, $total_properties,
         // $properties_this_week, $current_user
