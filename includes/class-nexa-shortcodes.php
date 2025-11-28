@@ -540,29 +540,28 @@ class Nexa_RE_Shortcodes {
     }
 
     public static function render_agency_dashboard( $atts = [] ) {
+
+        // 1. Permissions
         if ( ! is_user_logged_in() ) {
             return '<p>You must be logged in to access your agency dashboard. <a href="' . esc_url( wp_login_url( get_permalink() ) ) . '">Log in</a></p>';
         }
 
-        // Allow either specific capability OR normal administrators
+        // Allow either our custom cap OR standard administrators
         if ( ! current_user_can( 'manage_nexa_properties' ) && ! current_user_can( 'manage_options' ) ) {
             return '<p>You do not have permission to access this dashboard.</p>';
         }
 
-        // Get API URL + token
+        // 2. API setup
         $api_url   = rtrim( Nexa_RE_Settings::API_BASE_URL, '/' );
         $api_token = trim( get_option( Nexa_RE_Settings::OPTION_API_TOKEN, '' ) );
-        $messages  = [];
+
         if ( ! $api_token ) {
             return '<p><strong>Nexa:</strong> Agency API token is not configured. Contact your site administrator.</p>';
         }
 
-        // 1) Handle POST actions (create / update)
-        // 2) Handle GET actions (delete) with nonce
-        // 3) Fetch properties and stats from API
-        // 4) Render dashboard HTML (sidebar + cards + table + forms)
+        $messages = [];
 
-        /* --------- Handle delete (GET) --------- */
+        // 3. Handle DELETE action (via GET)
         if ( isset( $_GET['nexa_action'], $_GET['property_id'] ) && $_GET['nexa_action'] === 'delete_property' ) {
             $property_id = (int) $_GET['property_id'];
 
@@ -593,7 +592,8 @@ class Nexa_RE_Shortcodes {
             }
         }
 
-        /* --------- Handle create/update (POST) --------- */
+        // 4. (Optional) Handle save property (create/update) – hook up later if needed
+        // Keeping the structure here so design is ready for when you add the form.
         if ( isset( $_POST['nexa_action'] ) && $_POST['nexa_action'] === 'save_property' ) {
             if ( ! wp_verify_nonce( $_POST['nexa_property_nonce'] ?? '', 'nexa_save_property_front' ) ) {
                 $messages[] = [ 'type' => 'error', 'text' => 'Security check failed.' ];
@@ -636,12 +636,13 @@ class Nexa_RE_Shortcodes {
                 ];
 
                 if ( $is_edit ) {
-                    $endpoint     = $api_url . '/properties/' . $property_id;
+                    $endpoint      = $api_url . '/properties/' . $property_id;
                     $args['method'] = 'PUT';
-                    $response     = wp_remote_request( $endpoint, $args );
+                    $response      = wp_remote_request( $endpoint, $args );
                 } else {
-                    $endpoint     = $api_url . '/properties';
-                    $response     = wp_remote_post( $endpoint, array_merge( $args, [ 'method' => 'POST' ] ) );
+                    $endpoint      = $api_url . '/properties';
+                    $args['method'] = 'POST';
+                    $response      = wp_remote_post( $endpoint, $args );
                 }
 
                 if ( is_wp_error( $response ) ) {
@@ -657,10 +658,9 @@ class Nexa_RE_Shortcodes {
             }
         }
 
-
-        // Fetch properties for list & stats
-        $endpoint = $api_url . '/properties';
-        $response = wp_remote_get( $endpoint, [
+        // 5. Fetch properties for list & stats
+        $endpoint  = $api_url . '/properties';
+        $response  = wp_remote_get( $endpoint, [
             'headers' => [
                 'X-AGENCY-TOKEN' => $api_token,
                 'Accept'         => 'application/json',
@@ -677,11 +677,11 @@ class Nexa_RE_Shortcodes {
             }
         }
 
-        // Compute some quick stats
-        $total_properties = count( $properties );
-        $properties_this_week = 0;
-        $now  = current_time( 'timestamp' );
-        $week_start = strtotime( 'monday this week', $now );
+        // Stats
+        $total_properties       = count( $properties );
+        $properties_this_week   = 0;
+        $now                    = current_time( 'timestamp' );
+        $week_start             = strtotime( 'monday this week', $now );
 
         foreach ( $properties as $p ) {
             if ( ! empty( $p['created_at'] ) && strtotime( $p['created_at'] ) >= $week_start ) {
@@ -689,133 +689,559 @@ class Nexa_RE_Shortcodes {
             }
         }
 
-
-
+        $current_user = wp_get_current_user();
 
         ob_start();
-
         ?>
         <div class="nexa-agency-shell">
-            <div class="nexa-agency-sidebar">
-                <div class="nexa-agency-logo">Nexa</div>
-                <nav>
-                    <a class="active">Dashboard</a>
-                    <a>Properties</a>
-                    <!-- future items -->
-                </nav>
-            </div>
-
-            <div class="nexa-agency-main">
-                <header class="nexa-agency-topbar">
-                    <div class="title">Agency Dashboard</div>
-                    <div class="user">
-                        <?php $user = wp_get_current_user(); ?>
-                        <span class="avatar"><?php echo esc_html( strtoupper( mb_substr( $user->display_name, 0, 1 ) ) ); ?></span>
-                        <span class="name"><?php echo esc_html( $user->display_name ); ?></span>
-                    </div>
-                </header>
-
-                <?php foreach ( $messages as $msg ) : ?>
-                    <div class="nexa-banner nexa-banner-<?php echo esc_attr( $msg['type'] ); ?>">
-                        <?php echo esc_html( $msg['text'] ); ?>
-                    </div>
-                <?php endforeach; ?>
-
-                <section class="nexa-agency-cards">
-                    <div class="card">
-                        <div class="label">Total Properties</div>
-                        <div class="value"><?php echo esc_html( $total_properties ); ?></div>
-                    </div>
-                    <div class="card">
-                        <div class="label">This Week</div>
-                        <div class="value"><?php echo esc_html( $properties_this_week ); ?></div>
-                    </div>
-                    <!-- you can add more cards later -->
-                </section>
-
-                <section class="nexa-agency-properties">
-                    <div class="nexa-properties-header">
-                        <h2>Your Properties</h2>
-                        <button class="nexa-btn" id="nexa-open-property-form">Add New</button>
+            <div class="nexa-agency-layout">
+                <aside class="nexa-sidebar">
+                    <div class="nexa-sidebar-header">
+                        <div class="nexa-sidebar-logo-circle">N</div>
+                        <div>
+                            <div class="nexa-sidebar-title">Nexa Property Suite</div>
+                            <div class="nexa-sidebar-subtitle">Agency Admin</div>
+                        </div>
                     </div>
 
-                    <!-- properties table or grid -->
-                    <!-- e.g. simple table for now -->
-                    <table class="nexa-properties-table">
-                        <thead>
-                            <tr>
-                                <th>Title</th>
-                                <th>City</th>
-                                <th>Category</th>
-                                <th>Price</th>
-                                <th style="width:140px;">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php if ( empty( $properties ) ) : ?>
-                                <tr><td colspan="5">No properties yet.</td></tr>
-                            <?php else : ?>
-                                <?php foreach ( $properties as $p ) : ?>
-                                    <?php
-                                    $delete_url = wp_nonce_url(
-                                        add_query_arg(
-                                            [
-                                                'nexa_action' => 'delete_property',
-                                                'property_id' => intval( $p['id'] ),
-                                            ],
-                                            get_permalink()
-                                        ),
-                                        'nexa_delete_property_' . intval( $p['id'] )
-                                    );
-                                    ?>
-                                    <tr>
-                                        <td><?php echo esc_html( $p['title'] ?? '' ); ?></td>
-                                        <td><?php echo esc_html( $p['city'] ?? '' ); ?></td>
-                                        <td><?php echo esc_html( ucfirst( $p['category'] ?? '' ) ); ?></td>
-                                        <td><?php echo isset( $p['price'] ) ? esc_html( number_format_i18n( $p['price'] ) ) : '—'; ?></td>
-                                        <td>
-                                            <!-- for now: only delete; edit can be added later -->
-                                            <a href="<?php echo esc_url( $delete_url ); ?>" onclick="return confirm('Delete this property?');">Delete</a>
-                                        </td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            <?php endif; ?>
-                        </tbody>
-                    </table>
-                </section>
+                    <nav class="nexa-sidebar-nav">
+                        <a class="nexa-nav-link nexa-nav-link-active">
+                            <span class="nexa-nav-icon">▢</span>
+                            <span>Dashboard</span>
+                        </a>
+                        <a class="nexa-nav-link">
+                            <span class="nexa-nav-icon">▥</span>
+                            <span>Properties</span>
+                        </a>
+                    </nav>
 
-                <!-- Property form (can be slide-over or modal) -->
-                <!-- for now: simple collapsible form -->
-                <section class="nexa-agency-form" id="nexa-property-form" style="display:none;">
-                    <h2>Create / Edit Property</h2>
-                    <form method="post">
-                        <?php wp_nonce_field( 'nexa_save_property_front', 'nexa_property_nonce' ); ?>
-                        <input type="hidden" name="nexa_action" value="save_property">
-                        <input type="hidden" name="property_id" id="nexa-property-id" value="">
+                    <div class="nexa-sidebar-section-label">SYSTEM</div>
+                    <nav class="nexa-sidebar-nav">
+                        <a class="nexa-nav-link">
+                            <span class="nexa-nav-icon">⚙</span>
+                            <span>Settings</span>
+                        </a>
+                    </nav>
 
-                        <!-- title, description, etc. plus hidden images[] fields populated via JS+media library (we already wrote that logic for admin) -->
+                    <div class="nexa-sidebar-footer">
+                        © <?php echo esc_html( date( 'Y' ) ); ?> Nexa
+                    </div>
+                </aside>
 
-                        <!-- you can re-use exactly the same fields from the WP-admin form I gave earlier -->
-                    </form>
-                </section>
+                <main class="nexa-main">
+                    <header class="nexa-topbar">
+                        <div class="nexa-topbar-title">Dashboard</div>
+                        <div class="nexa-topbar-right">
+                            <div class="nexa-topbar-search">
+                                <span class="nexa-topbar-search-icon">🔍</span>
+                                <input type="text" placeholder="Search (coming soon)" disabled>
+                            </div>
+                            <div class="nexa-topbar-user">
+                                <div class="nexa-user-avatar">
+                                    <?php echo esc_html( strtoupper( mb_substr( $current_user->display_name, 0, 1 ) ) ); ?>
+                                </div>
+                                <div class="nexa-user-meta">
+                                    <div class="nexa-user-name"><?php echo esc_html( $current_user->display_name ); ?></div>
+                                    <div class="nexa-user-role">Admin</div>
+                                </div>
+                            </div>
+                        </div>
+                    </header>
+
+                    <?php if ( ! empty( $messages ) ) : ?>
+                        <div class="nexa-messages">
+                            <?php foreach ( $messages as $msg ) : ?>
+                                <div class="nexa-banner nexa-banner-<?php echo esc_attr( $msg['type'] ); ?>">
+                                    <?php echo esc_html( $msg['text'] ); ?>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+
+                    <section class="nexa-stats-row">
+                        <div class="nexa-stat-card">
+                            <div class="nexa-stat-label">TOTAL PROPERTIES</div>
+                            <div class="nexa-stat-value"><?php echo esc_html( $total_properties ); ?></div>
+                            <div class="nexa-stat-sub">Across your agency</div>
+                        </div>
+
+                        <div class="nexa-stat-card">
+                            <div class="nexa-stat-label">THIS WEEK (PROPERTIES)</div>
+                            <div class="nexa-stat-value"><?php echo esc_html( $properties_this_week ); ?></div>
+                            <div class="nexa-stat-sub">New properties added</div>
+                        </div>
+
+                        <div class="nexa-stat-card nexa-stat-card-highlight">
+                            <div class="nexa-stat-label">SYSTEM HEALTH</div>
+                            <div class="nexa-stat-value">99.9%</div>
+                            <div class="nexa-stat-sub">API uptime (placeholder)</div>
+                        </div>
+                    </section>
+
+                    <section class="nexa-properties-section">
+                        <div class="nexa-properties-header">
+                            <div>
+                                <h2 class="nexa-section-title">Your Properties</h2>
+                                <p class="nexa-section-subtitle">Manage the properties published on your website.</p>
+                            </div>
+                            <button type="button" class="nexa-btn" id="nexa-add-property-btn" disabled>
+                                + Add New Property (coming soon)
+                            </button>
+                        </div>
+
+                        <div class="nexa-card">
+                            <div class="nexa-table-wrapper">
+                                <table class="nexa-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Title</th>
+                                            <th>City</th>
+                                            <th>Category</th>
+                                            <th>Price</th>
+                                            <th>Created</th>
+                                            <th style="width: 120px;">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php if ( empty( $properties ) ) : ?>
+                                            <tr>
+                                                <td colspan="6" class="nexa-table-empty">
+                                                    No properties found yet. You’ll be able to create them directly from here soon.
+                                                </td>
+                                            </tr>
+                                        <?php else : ?>
+                                            <?php foreach ( $properties as $p ) : ?>
+                                                <?php
+                                                $created = '—';
+                                                if ( ! empty( $p['created_at'] ) ) {
+                                                    $timestamp = strtotime( $p['created_at'] );
+                                                    if ( $timestamp ) {
+                                                        $created = date_i18n( get_option( 'date_format' ), $timestamp );
+                                                    }
+                                                }
+
+                                                $delete_url = wp_nonce_url(
+                                                    add_query_arg(
+                                                        [
+                                                            'nexa_action' => 'delete_property',
+                                                            'property_id' => intval( $p['id'] ),
+                                                        ],
+                                                        get_permalink()
+                                                    ),
+                                                    'nexa_delete_property_' . intval( $p['id'] )
+                                                );
+                                                ?>
+                                                <tr>
+                                                    <td class="nexa-table-title">
+                                                        <?php echo esc_html( $p['title'] ?? '' ); ?>
+                                                    </td>
+                                                    <td><?php echo esc_html( $p['city'] ?? '' ); ?></td>
+                                                    <td><?php echo esc_html( ucfirst( $p['category'] ?? '' ) ); ?></td>
+                                                    <td>
+                                                        <?php
+                                                        if ( isset( $p['price'] ) ) {
+                                                            echo esc_html( number_format_i18n( $p['price'] ) );
+                                                        } else {
+                                                            echo '—';
+                                                        }
+                                                        ?>
+                                                    </td>
+                                                    <td><?php echo esc_html( $created ); ?></td>
+                                                    <td>
+                                                        <a class="nexa-link-muted" href="<?php echo esc_url( $delete_url ); ?>" onclick="return confirm('Delete this property?');">
+                                                            Delete
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        <?php endif; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </section>
+                </main>
             </div>
         </div>
 
         <style>
-        /* here you mimic your Laravel admin styles: sidebar, top bar, cards, etc. */
+            .nexa-agency-shell {
+                --nexa-primary: #4f46e5;
+                --nexa-primary-soft: #eef2ff;
+                --nexa-bg: #f5f3ff;
+                --nexa-sidebar-bg: #020617;
+                --nexa-sidebar-text: #e5e7eb;
+                --nexa-card-bg: #ffffff;
+                --nexa-border-subtle: #e5e7eb;
+                --nexa-text-main: #0f172a;
+                --nexa-text-muted: #6b7280;
+                --nexa-danger: #ef4444;
+                --nexa-success: #22c55e;
+                font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+            }
+
+            .nexa-agency-layout {
+                display: grid;
+                grid-template-columns: 240px minmax(0, 1fr);
+                min-height: 70vh;
+                background: var(--nexa-bg);
+            }
+
+            /* Sidebar */
+            .nexa-sidebar {
+                background: var(--nexa-sidebar-bg);
+                color: var(--nexa-sidebar-text);
+                padding: 20px 18px;
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .nexa-sidebar-header {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 8px;
+            }
+
+            .nexa-sidebar-logo-circle {
+                width: 32px;
+                height: 32px;
+                border-radius: 999px;
+                background: var(--nexa-primary);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 700;
+                font-size: 15px;
+            }
+
+            .nexa-sidebar-title {
+                font-size: 13px;
+                font-weight: 600;
+            }
+
+            .nexa-sidebar-subtitle {
+                font-size: 11px;
+                opacity: 0.6;
+            }
+
+            .nexa-sidebar-nav {
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+                margin-top: 6px;
+            }
+
+            .nexa-nav-link {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                font-size: 13px;
+                padding: 7px 9px;
+                border-radius: 10px;
+                text-decoration: none;
+                color: inherit;
+                opacity: 0.7;
+            }
+
+            .nexa-nav-link-active,
+            .nexa-nav-link:hover {
+                opacity: 1;
+                background: rgba(148, 163, 184, 0.12);
+            }
+
+            .nexa-nav-icon {
+                font-size: 12px;
+            }
+
+            .nexa-sidebar-section-label {
+                font-size: 11px;
+                text-transform: uppercase;
+                opacity: 0.6;
+                margin-top: 12px;
+            }
+
+            .nexa-sidebar-footer {
+                margin-top: auto;
+                font-size: 11px;
+                opacity: 0.5;
+            }
+
+            /* Main */
+            .nexa-main {
+                padding: 20px 28px 40px;
+                display: flex;
+                flex-direction: column;
+                gap: 18px;
+            }
+
+            .nexa-topbar {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .nexa-topbar-title {
+                font-size: 20px;
+                font-weight: 600;
+                color: var(--nexa-text-main);
+            }
+
+            .nexa-topbar-right {
+                display: flex;
+                align-items: center;
+                gap: 14px;
+            }
+
+            .nexa-topbar-search {
+                position: relative;
+                max-width: 260px;
+                width: 100%;
+            }
+
+            .nexa-topbar-search input {
+                width: 100%;
+                border-radius: 999px;
+                border: 1px solid var(--nexa-border-subtle);
+                padding: 7px 32px;
+                font-size: 12px;
+                background: #f9fafb;
+            }
+
+            .nexa-topbar-search-icon {
+                position: absolute;
+                left: 10px;
+                top: 50%;
+                transform: translateY(-50%);
+                font-size: 12px;
+                opacity: 0.6;
+            }
+
+            .nexa-topbar-user {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .nexa-user-avatar {
+                width: 32px;
+                height: 32px;
+                border-radius: 999px;
+                background: var(--nexa-primary);
+                color: #fff;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 600;
+                font-size: 14px;
+            }
+
+            .nexa-user-meta {
+                font-size: 11px;
+                color: var(--nexa-text-main);
+            }
+
+            .nexa-user-name {
+                font-weight: 500;
+            }
+
+            .nexa-user-role {
+                opacity: 0.6;
+            }
+
+            .nexa-messages {
+                margin-top: 8px;
+            }
+
+            .nexa-banner {
+                padding: 8px 10px;
+                border-radius: 10px;
+                font-size: 12px;
+                margin-bottom: 6px;
+            }
+
+            .nexa-banner-success {
+                background: #ecfdf3;
+                color: #15803d;
+            }
+
+            .nexa-banner-error {
+                background: #fef2f2;
+                color: #b91c1c;
+            }
+
+            .nexa-stats-row {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+                gap: 14px;
+                margin-top: 8px;
+            }
+
+            .nexa-stat-card {
+                background: var(--nexa-card-bg);
+                border-radius: 18px;
+                padding: 14px 16px;
+                box-shadow: 0 10px 30px rgba(148,163,184,0.18);
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+            }
+
+            .nexa-stat-card-highlight {
+                background: var(--nexa-primary);
+                color: #fff;
+            }
+
+            .nexa-stat-label {
+                font-size: 11px;
+                text-transform: uppercase;
+                letter-spacing: .04em;
+                color: #6b7280;
+            }
+
+            .nexa-stat-card-highlight .nexa-stat-label {
+                color: rgba(241,245,249,0.9);
+            }
+
+            .nexa-stat-value {
+                font-size: 20px;
+                font-weight: 700;
+                color: var(--nexa-text-main);
+            }
+
+            .nexa-stat-card-highlight .nexa-stat-value {
+                color: #fff;
+            }
+
+            .nexa-stat-sub {
+                font-size: 11px;
+                color: var(--nexa-text-muted);
+            }
+
+            .nexa-stat-card-highlight .nexa-stat-sub {
+                color: rgba(226,232,240,0.95);
+            }
+
+            .nexa-properties-section {
+                margin-top: 10px;
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .nexa-properties-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .nexa-section-title {
+                font-size: 16px;
+                font-weight: 600;
+                color: var(--nexa-text-main);
+            }
+
+            .nexa-section-subtitle {
+                font-size: 12px;
+                color: var(--nexa-text-muted);
+                margin-top: 2px;
+            }
+
+            .nexa-btn {
+                border: none;
+                border-radius: 999px;
+                padding: 8px 14px;
+                font-size: 12px;
+                font-weight: 500;
+                background: var(--nexa-primary);
+                color: #fff;
+                cursor: not-allowed;
+                opacity: 0.65;
+            }
+
+            .nexa-card {
+                background: var(--nexa-card-bg);
+                border-radius: 18px;
+                box-shadow: 0 10px 30px rgba(148,163,184,0.18);
+                padding: 12px 14px 14px;
+            }
+
+            .nexa-table-wrapper {
+                overflow-x: auto;
+            }
+
+            .nexa-table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 13px;
+            }
+
+            .nexa-table thead {
+                background: #f9fafb;
+            }
+
+            .nexa-table th,
+            .nexa-table td {
+                padding: 8px 10px;
+                text-align: left;
+                border-bottom: 1px solid #f1f5f9;
+            }
+
+            .nexa-table th {
+                font-size: 11px;
+                text-transform: uppercase;
+                letter-spacing: .04em;
+                color: #9ca3af;
+            }
+
+            .nexa-table-title {
+                font-weight: 500;
+                color: var(--nexa-text-main);
+            }
+
+            .nexa-table tbody tr:hover {
+                background: #f9fafb;
+            }
+
+            .nexa-table-empty {
+                text-align: center;
+                font-size: 12px;
+                color: var(--nexa-text-muted);
+            }
+
+            .nexa-link-muted {
+                font-size: 12px;
+                color: #9ca3af;
+            }
+
+            .nexa-link-muted:hover {
+                color: #ef4444;
+            }
+
+            @media (max-width: 900px) {
+                .nexa-agency-layout {
+                    grid-template-columns: 1fr;
+                }
+                .nexa-sidebar {
+                    position: sticky;
+                    top: 0;
+                    z-index: 5;
+                    flex-direction: row;
+                    align-items: center;
+                    justify-content: space-between;
+                }
+                .nexa-sidebar-nav,
+                .nexa-sidebar-section-label,
+                .nexa-sidebar-footer {
+                    display: none;
+                }
+            }
         </style>
-
-        <script>
-        /* JS to toggle the property form, open media library to pick images, etc. */
-        </script>
         <?php
-
-
-
-        // We’ll fill these in next steps
-        // echo '<div class="nexa-agency-dashboard">...</div>';
 
         return ob_get_clean();
     }
+
 
 }
