@@ -14,6 +14,19 @@ define( 'NEXA_RE_VERSION', '0.1.0' );
 define( 'NEXA_RE_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'NEXA_RE_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
+/**
+ * Add capabilities on plugin activation
+ */
+register_activation_hook( __FILE__, 'nexa_re_add_capabilities' );
+
+function nexa_re_add_capabilities() {
+    // Give WP administrators the ability to access Nexa dashboard
+    $role = get_role( 'administrator' );
+    if ( $role && ! $role->has_cap( 'manage_nexa_properties' ) ) {
+        $role->add_cap( 'manage_nexa_properties' );
+    }
+}
+
 require_once NEXA_RE_PLUGIN_DIR . 'includes/class-nexa-settings.php';
 require_once NEXA_RE_PLUGIN_DIR . 'includes/class-nexa-shortcodes.php';
 require_once plugin_dir_path( __FILE__ ) . 'includes/class-nexa-admin.php';

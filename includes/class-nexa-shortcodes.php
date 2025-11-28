@@ -544,7 +544,8 @@ class Nexa_RE_Shortcodes {
             return '<p>You must be logged in to access your agency dashboard. <a href="' . esc_url( wp_login_url( get_permalink() ) ) . '">Log in</a></p>';
         }
 
-        if ( ! current_user_can( 'manage_nexa_properties' ) ) {
+        // Allow either specific capability OR normal administrators
+        if ( ! current_user_can( 'manage_nexa_properties' ) && ! current_user_can( 'manage_options' ) ) {
             return '<p>You do not have permission to access this dashboard.</p>';
         }
 
