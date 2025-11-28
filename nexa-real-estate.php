@@ -27,8 +27,35 @@ function nexa_re_add_capabilities() {
     }
 }
 
+/**
+ * Enqueue frontend assets for the Nexa agency dashboard.
+ */
+function nexa_re_enqueue_front_assets() {
+    if ( ! is_singular() ) {
+        return;
+    }
+
+    global $post;
+    if ( ! $post instanceof WP_Post ) {
+        return;
+    }
+
+    // Only load CSS if the page content has the dashboard shortcode
+    if ( has_shortcode( $post->post_content, 'nexa_agency_dashboard' ) ) {
+        wp_enqueue_style(
+            'nexa-re-dashboard',
+            NEXA_RE_PLUGIN_URL . 'assets/css/nexa-dashboard.css',
+            [],
+            NEXA_RE_VERSION
+        );
+    }
+}
+add_action( 'wp_enqueue_scripts', 'nexa_re_enqueue_front_assets' );
+
+
 require_once NEXA_RE_PLUGIN_DIR . 'includes/class-nexa-settings.php';
 require_once NEXA_RE_PLUGIN_DIR . 'includes/class-nexa-shortcodes.php';
+require_once NEXA_RE_PLUGIN_DIR . 'includes/class-nexa-api-client.php';
 require_once plugin_dir_path( __FILE__ ) . 'includes/class-nexa-admin.php';
 Nexa_RE_Admin::init();
 
