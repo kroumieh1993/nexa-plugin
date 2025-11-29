@@ -54,7 +54,7 @@
                                 'nexa_delete_property_' . intval( $p['id'] )
                             );
                             ?>
-                            <tr>
+                            <tr data-property='{"id":<?php echo intval( $p['id'] ); ?>}'>
                                 <td class="nexa-table-title">
                                     <?php echo esc_html( $p['title'] ?? '' ); ?>
                                 </td>
@@ -71,7 +71,10 @@
                                 </td>
                                 <td><?php echo esc_html( $created ); ?></td>
                                 <td>
-                                    <!-- later we’ll add Edit here -->
+                                    <a class="nexa-link-muted nexa-edit-property" href="#" data-property='<?php echo esc_attr( wp_json_encode( $p ) ); ?>'>
+                                        Edit
+                                    </a>
+                                    <span aria-hidden="true">|</span>
                                     <a class="nexa-link-muted" href="<?php echo esc_url( $delete_url ); ?>" onclick="return confirm('Delete this property?');">
                                         Delete
                                     </a>
@@ -222,12 +225,15 @@
 <script>
 (function($){
     $(function(){
-        var $modal      = $('#nexa-property-modal');
-        var $btnOpen    = $('#nexa-add-property-btn');
-        var $btnClose   = $('#nexa-property-modal-close');
-        var $btnCancel  = $('#nexa-cancel-property-btn');
+        var $modal         = $('#nexa-property-modal');
+        var $btnOpen       = $('#nexa-add-property-btn');
+        var $btnClose      = $('#nexa-property-modal-close');
+        var $btnCancel     = $('#nexa-cancel-property-btn');
         var $imagesPreview = $('#nexa-images-preview-front');
-        var mediaFrame  = null;
+        var $modalTitle    = $modal.find('.nexa-modal-title');
+        var $modalSubtitle = $modal.find('.nexa-modal-subtitle');
+        var $submitBtn     = $('#nexa-property-form').find('button[type="submit"]');
+        var mediaFrame     = null;
 
         function resetForm() {
             $('#nexa-property-id').val('');
@@ -248,10 +254,59 @@
             $('.nexa-tab-btn[data-tab="basic"]').addClass('nexa-tab-active');
             $('.nexa-tab-panel').hide();
             $('.nexa-tab-panel[data-tab-panel="basic"]').show();
+
+            $modalTitle.text('Create Property');
+            $modalSubtitle.text('Fill in the details to create a new property for your agency.');
+            $submitBtn.text('Save Property');
         }
 
-        function openModal() {
+        function fillFormFromProperty(property) {
+            if (!property || typeof property !== 'object') {
+                return;
+            }
+
+            $('#nexa-property-id').val(property.id || '');
+            $('#nexa-title').val(property.title || '');
+            $('#nexa-description').val(property.description || '');
+            $('#nexa-category').val(property.category || 'rent');
+            $('#nexa-city').val(property.city || '');
+            $('#nexa-property-type').val(property.property_type || '');
+            $('#nexa-area').val(property.area || '');
+            $('#nexa-address').val(property.address || '');
+            $('#nexa-price').val(property.price != null ? property.price : '');
+            $('#nexa-bedrooms').val(property.bedrooms != null ? property.bedrooms : '');
+            $('#nexa-bathrooms').val(property.bathrooms != null ? property.bathrooms : '');
+
+            $imagesPreview.empty();
+            if (Array.isArray(property.images)) {
+                property.images.forEach(function(img){
+                    var url = '';
+                    if (typeof img === 'string') {
+                        url = img;
+                    } else if (img && typeof img === 'object' && img.url) {
+                        url = img.url;
+                    }
+
+                    if (!url) return;
+
+                    var $thumb = $('<div class="nexa-image-thumb"></div>');
+                    $thumb.append('<img src="'+url+'">');
+                    $thumb.append('<input type="hidden" name="images[]" value="'+url+'">');
+                    $imagesPreview.append($thumb);
+                });
+            }
+        }
+
+        function openModal(property) {
             resetForm();
+
+            if (property) {
+                fillFormFromProperty(property);
+                $modalTitle.text('Edit Property');
+                $modalSubtitle.text('Update the property details and save your changes.');
+                $submitBtn.text('Save Changes');
+            }
+
             $modal.fadeIn(160);
         }
 
@@ -296,6 +351,27 @@
 
             $('.nexa-tab-panel').hide();
             $('.nexa-tab-panel[data-tab-panel="'+tab+'"]').show();
+        });
+
+        $('.nexa-edit-property').on('click', function(e){
+            e.preventDefault();
+            var raw   = $(this).data('property');
+            var prop  = raw;
+
+            // If dataset came through as a string, parse it
+            if (typeof raw === 'string') {
+                try {
+                    prop = JSON.parse(raw);
+                } catch (err) {
+                    prop = null;
+                }
+            }
+
+            if (!prop) {
+                return;
+            }
+
+            openModal(prop);
         });
 
         // Media library
