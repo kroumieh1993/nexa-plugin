@@ -14,7 +14,6 @@
 .nexa-single-eyebrow {
     display: inline-flex;
     gap: 10px;
-    align-items: center;
     font-size: 12px;
     color: #6366f1;
     font-weight: 700;
@@ -37,7 +36,7 @@
     background: linear-gradient(135deg, #4f46e5, #7c3aed);
     color: #fff;
     padding: 12px 18px;
-    border-radius: 14px;
+    border-radius: 5px;
     font-weight: 800;
     font-size: 18px;
     box-shadow: 0 14px 40px rgba(79, 70, 229, 0.15);
@@ -64,7 +63,7 @@
 }
 .nexa-single-gallery {
     background: #ffffff;
-    border-radius: 18px;
+    border-radius: 5px;
     padding: 16px;
     box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
     margin-bottom: 24px;
@@ -72,7 +71,7 @@
 .nexa-gallery-main {
     position: relative;
     padding-top: 56.25%;
-    border-radius: 14px;
+    border-radius: 5px;
     overflow: hidden;
     background: linear-gradient(120deg, #e2e8f0, #f8fafc);
 }
@@ -145,7 +144,7 @@
 .nexa-detail-card {
     padding: 14px 16px;
     background: #ffffff;
-    border-radius: 14px;
+    border-radius: 5px;
     box-shadow: 0 10px 24px rgba(15, 23, 42, 0.07);
 }
 .nexa-detail-label {
@@ -162,7 +161,7 @@
 }
 .nexa-description {
     background: #ffffff;
-    border-radius: 16px;
+    border-radius: 5px;
     padding: 18px;
     box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
 }
@@ -180,7 +179,7 @@
     padding: 14px 16px;
     background: #fef2f2;
     color: #991b1b;
-    border-radius: 12px;
+    border-radius: 5px;
     border: 1px solid #fecaca;
 }
 @media (max-width: 720px) {
