@@ -69,6 +69,11 @@ class Nexa_Real_Estate_Plugin {
 
         // Shortcodes
         add_action( 'init', [ 'Nexa_RE_Shortcodes', 'register_shortcodes' ] );
+
+        // Front-end routing for single property pages
+        add_action( 'init', [ $this, 'add_rewrite_rules' ] );
+        add_filter( 'query_vars', [ $this, 'register_query_vars' ] );
+        add_filter( 'template_include', [ $this, 'maybe_render_property_template' ] );
     }
 
     public function register_settings_page() {
@@ -80,6 +85,52 @@ class Nexa_Real_Estate_Plugin {
             [ 'Nexa_RE_Settings', 'render_settings_page' ]
         );
     }
+
+    public function add_rewrite_rules() {
+        add_rewrite_rule( '^properties/([0-9]+)/?$', 'index.php?nexa_property_id=$matches[1]', 'top' );
+    }
+
+    public function register_query_vars( $vars ) {
+        $vars[] = 'nexa_property_id';
+        return $vars;
+    }
+
+    public function maybe_render_property_template( $template ) {
+        $property_id = (int) get_query_var( 'nexa_property_id' );
+
+        if ( ! $property_id && isset( $_GET['nexa_property_id'] ) ) {
+            $property_id = (int) $_GET['nexa_property_id'];
+        }
+
+        if ( ! $property_id ) {
+            return $template;
+        }
+
+        $api    = new Nexa_RE_Api_Client();
+        $result = $api->get_property( $property_id );
+
+        if ( ! $result['ok'] || empty( $result['data'] ) ) {
+            status_header( 404 );
+            set_query_var( 'nexa_property_error', 'Property not found.' );
+            return NEXA_RE_PLUGIN_DIR . 'views/property-single.php';
+        }
+
+        set_query_var( 'nexa_property', $result['data'] );
+
+        return NEXA_RE_PLUGIN_DIR . 'views/property-single.php';
+    }
+
+    public static function activate() {
+        $plugin = new self();
+        $plugin->add_rewrite_rules();
+        flush_rewrite_rules();
+    }
+
+    public static function deactivate() {
+        flush_rewrite_rules();
+    }
 }
 
 new Nexa_Real_Estate_Plugin();
+register_activation_hook( __FILE__, [ 'Nexa_Real_Estate_Plugin', 'activate' ] );
+register_deactivation_hook( __FILE__, [ 'Nexa_Real_Estate_Plugin', 'deactivate' ] );
