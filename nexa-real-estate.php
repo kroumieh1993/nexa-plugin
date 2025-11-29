@@ -53,6 +53,22 @@ function nexa_re_enqueue_front_assets() {
 add_action( 'wp_enqueue_scripts', 'nexa_re_enqueue_front_assets' );
 
 
+// Frontend styles for Nexa single Property pages.
+function nexa_re_enqueue_frontend_assets() {
+    // Only load on our single-property view.
+    if ( get_query_var( 'nexa_property' ) ) {
+        wp_enqueue_style(
+            'nexa-re-single-property',
+            NEXA_RE_PLUGIN_URL . 'assets/css/nexa-single-property.css',
+            [],
+            NEXA_RE_VERSION
+        );
+    }
+}
+add_action( 'wp_enqueue_scripts', 'nexa_re_enqueue_frontend_assets' );
+
+
+
 require_once NEXA_RE_PLUGIN_DIR . 'includes/class-nexa-settings.php';
 require_once NEXA_RE_PLUGIN_DIR . 'includes/class-nexa-shortcodes.php';
 require_once NEXA_RE_PLUGIN_DIR . 'includes/class-nexa-api-client.php';
