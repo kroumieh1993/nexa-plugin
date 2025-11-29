@@ -62,6 +62,10 @@ class Nexa_RE_Api_Client {
         return $this->request( 'GET', '/properties' );
     }
 
+    public function get_property( $id ) {
+        return $this->request( 'GET', '/properties/' . (int) $id );
+    }
+
     public function delete_property( $id ) {
         return $this->request( 'DELETE', '/properties/' . (int) $id );
     }
