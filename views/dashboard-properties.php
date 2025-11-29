@@ -43,16 +43,20 @@
                                 }
                             }
 
+                            $property_id = intval( $p['id'] );
+
                             $delete_url = wp_nonce_url(
                                 add_query_arg(
                                     [
                                         'nexa_action' => 'delete_property',
-                                        'property_id' => intval( $p['id'] ),
+                                        'property_id' => $property_id,
                                     ],
                                     get_permalink()
                                 ),
-                                'nexa_delete_property_' . intval( $p['id'] )
+                                'nexa_delete_property_' . $property_id
                             );
+
+                            $view_url = $property_id ? home_url( '/properties/' . $property_id . '/' ) : home_url();
                             ?>
                             <tr data-property='{"id":<?php echo intval( $p['id'] ); ?>}'>
                                 <td class="nexa-table-title">
@@ -71,6 +75,10 @@
                                 </td>
                                 <td><?php echo esc_html( $created ); ?></td>
                                 <td>
+                                    <a class="nexa-link-muted" href="<?php echo esc_url( $view_url ); ?>" target="_blank" rel="noopener noreferrer">
+                                        View
+                                    </a>
+                                    <span aria-hidden="true">|</span>
                                     <a class="nexa-link-muted nexa-edit-property" href="#" data-property='<?php echo esc_attr( wp_json_encode( $p ) ); ?>'>
                                         Edit
                                     </a>
