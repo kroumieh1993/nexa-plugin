@@ -88,12 +88,44 @@ get_header();
             overflow: hidden;
             background: linear-gradient(120deg, #e2e8f0, #f8fafc);
         }
-        .nexa-gallery-main img {
+        .nexa-gallery-slide {
             position: absolute;
             inset: 0;
             width: 100%;
             height: 100%;
             object-fit: cover;
+            opacity: 0;
+            transition: opacity 0.28s ease-in-out;
+        }
+        .nexa-gallery-slide.is-active {
+            opacity: 1;
+        }
+        .nexa-gallery-nav {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            pointer-events: none;
+            padding: 0 8px;
+        }
+        .nexa-gallery-btn {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(15, 23, 42, 0.54);
+            color: #fff;
+            font-size: 18px;
+            cursor: pointer;
+            pointer-events: auto;
+            display: grid;
+            place-items: center;
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+        .nexa-gallery-btn:hover {
+            background: rgba(79, 70, 229, 0.9);
+            transform: translateY(-1px);
         }
         .nexa-gallery-thumbs {
             display: grid;
@@ -106,6 +138,15 @@ get_header();
             height: 90px;
             object-fit: cover;
             border-radius: 10px;
+            opacity: 0.7;
+            border: 2px solid transparent;
+            transition: opacity 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+            cursor: pointer;
+        }
+        .nexa-gallery-thumbs img.is-active {
+            opacity: 1;
+            border-color: #4f46e5;
+            transform: translateY(-1px);
         }
         .nexa-details-grid {
             display: grid;
@@ -226,17 +267,25 @@ get_header();
         </section>
 
         <section class="nexa-single-gallery">
-            <div class="nexa-gallery-main">
+            <div class="nexa-gallery-main" data-nexa-gallery>
                 <?php if ( ! empty( $images ) ) : ?>
-                    <img src="<?php echo esc_url( $images[0] ); ?>" alt="<?php echo esc_attr( $title ); ?>">
+                    <?php foreach ( $images as $index => $img ) : ?>
+                        <img class="nexa-gallery-slide <?php echo 0 === $index ? 'is-active' : ''; ?>" data-nexa-slide="<?php echo esc_attr( $index ); ?>" src="<?php echo esc_url( $img ); ?>" alt="<?php echo esc_attr( $title ); ?> image <?php echo esc_attr( $index + 1 ); ?>">
+                    <?php endforeach; ?>
+                    <?php if ( count( $images ) > 1 ) : ?>
+                        <div class="nexa-gallery-nav">
+                            <button type="button" class="nexa-gallery-btn" data-nexa-prev aria-label="Previous image">‹</button>
+                            <button type="button" class="nexa-gallery-btn" data-nexa-next aria-label="Next image">›</button>
+                        </div>
+                    <?php endif; ?>
                 <?php else : ?>
                     <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-weight:600;">No images available</div>
                 <?php endif; ?>
             </div>
             <?php if ( count( $images ) > 1 ) : ?>
-                <div class="nexa-gallery-thumbs">
-                    <?php foreach ( array_slice( $images, 1 ) as $img ) : ?>
-                        <img src="<?php echo esc_url( $img ); ?>" alt="Thumbnail for <?php echo esc_attr( $title ); ?>">
+                <div class="nexa-gallery-thumbs" data-nexa-thumbs>
+                    <?php foreach ( $images as $index => $img ) : ?>
+                        <img class="<?php echo 0 === $index ? 'is-active' : ''; ?>" data-nexa-thumb="<?php echo esc_attr( $index ); ?>" src="<?php echo esc_url( $img ); ?>" alt="Thumbnail for <?php echo esc_attr( $title ); ?>">
                     <?php endforeach; ?>
                 </div>
             <?php endif; ?>
@@ -287,5 +336,87 @@ get_header();
         </section>
     <?php endif; ?>
 </main>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const gallery = document.querySelector('[data-nexa-gallery]');
+    if (!gallery) {
+        return;
+    }
+
+    const slides = Array.from(gallery.querySelectorAll('[data-nexa-slide]'));
+    if (!slides.length) {
+        return;
+    }
+
+    const thumbs = Array.from(document.querySelectorAll('[data-nexa-thumb]'));
+    const nextBtn = gallery.querySelector('[data-nexa-next]');
+    const prevBtn = gallery.querySelector('[data-nexa-prev]');
+    let currentIndex = 0;
+    let startX = null;
+
+    const updateActive = () => {
+        slides.forEach((slide, index) => {
+            slide.classList.toggle('is-active', index === currentIndex);
+        });
+
+        thumbs.forEach((thumb, index) => {
+            thumb.classList.toggle('is-active', index === currentIndex);
+        });
+    };
+
+    const goTo = (index) => {
+        const total = slides.length;
+        currentIndex = (index + total) % total;
+        updateActive();
+    };
+
+    const goNext = () => goTo(currentIndex + 1);
+    const goPrev = () => goTo(currentIndex - 1);
+
+    nextBtn?.addEventListener('click', goNext);
+    prevBtn?.addEventListener('click', goPrev);
+
+    thumbs.forEach((thumb) => {
+        thumb.addEventListener('click', () => {
+            const index = parseInt(thumb.dataset.nexaThumb, 10);
+            if (!Number.isNaN(index)) {
+                goTo(index);
+            }
+        });
+    });
+
+    const handleTouchStart = (event) => {
+        const touch = event.touches[0];
+        if (touch) {
+            startX = touch.clientX;
+        }
+    };
+
+    const handleTouchEnd = (event) => {
+        if (startX === null) {
+            return;
+        }
+
+        const touch = event.changedTouches[0];
+        if (!touch) {
+            return;
+        }
+
+        const deltaX = touch.clientX - startX;
+        if (Math.abs(deltaX) > 40) {
+            if (deltaX > 0) {
+                goPrev();
+            } else {
+                goNext();
+            }
+        }
+
+        startX = null;
+    };
+
+    gallery.addEventListener('touchstart', handleTouchStart, { passive: true });
+    gallery.addEventListener('touchend', handleTouchEnd);
+});
+</script>
 <?php
 get_footer();
