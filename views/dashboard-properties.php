@@ -374,6 +374,46 @@
                     $imagesPreview.append($thumb);
                 });
             }
+
+            // Populate floor plans
+            $floorplansList.empty();
+            floorplanIndex = 0;
+            if (Array.isArray(property.floor_plans)) {
+                property.floor_plans.forEach(function(plan){
+                    var fileUrl = '';
+                    var label = '';
+
+                    if (plan && typeof plan === 'object') {
+                        fileUrl = plan.file_url || '';
+                        label = plan.label || '';
+                    }
+
+                    if (!fileUrl) return;
+
+                    var idx = floorplanIndex++;
+                    var fileName = fileUrl.split('/').pop() || 'PDF selected';
+
+                    // Escape values for safe HTML insertion
+                    var escapedLabel = $('<div>').text(label).html();
+                    var escapedFileName = $('<div>').text(fileName).html();
+                    var escapedFileUrl = $('<div>').text(fileUrl).html();
+
+                    var $row = $('<div class="nexa-floorplan-row" data-index="' + idx + '">' +
+                        '<div class="nexa-form-row" style="margin-bottom:6px;">' +
+                            '<input class="nexa-input" type="text" name="floor_plans[' + idx + '][label]" placeholder="Label (e.g. Ground Floor)" value="' + escapedLabel + '">' +
+                        '</div>' +
+                        '<div class="nexa-floorplan-row-actions">' +
+                            '<button type="button" class="nexa-btn nexa-btn-secondary nexa-select-floorplan" data-index="' + idx + '">Select PDF</button>' +
+                            '<span class="nexa-floorplan-file nexa-section-subtitle">' + escapedFileName + '</span>' +
+                            '<button type="button" class="nexa-link-muted nexa-remove-floorplan" style="margin-left:auto;">Remove</button>' +
+                        '</div>' +
+                        '<input type="hidden" name="floor_plans[' + idx + '][file_url]" value="' + escapedFileUrl + '">' +
+                        '<input type="hidden" name="floor_plans[' + idx + '][order]" value="' + idx + '">' +
+                    '</div>');
+
+                    $floorplansList.append($row);
+                });
+            }
         }
 
         function openModal(property) {
