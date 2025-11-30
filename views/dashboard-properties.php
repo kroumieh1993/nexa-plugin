@@ -113,8 +113,8 @@
             <button type="button" class="nexa-tab-btn nexa-tab-active" data-tab="basic">
                 Basic Info
             </button>
-            <button type="button" class="nexa-tab-btn nexa-tab-disabled" data-tab="details" disabled>
-                Details (soon)
+            <button type="button" class="nexa-tab-btn" data-tab="details">
+                Details
             </button>
             <button type="button" class="nexa-tab-btn nexa-tab-disabled" data-tab="media" disabled>
                 Media & Docs (soon)
@@ -203,11 +203,23 @@
                     </div>
                 </div>
 
-                <!-- Tab: Details (placeholder) -->
+                <!-- Tab: Details -->
                 <div class="nexa-tab-panel" data-tab-panel="details" style="display:none;">
-                    <p class="nexa-section-subtitle">
-                        Additional details such as amenities, parking, and furnishing will appear here in a future update.
-                    </p>
+                    <div class="nexa-form-grid">
+                        <div class="nexa-form-col">
+                            <div class="nexa-form-row">
+                                <label class="nexa-form-label">Floor Plans (PDF)</label>
+                                <p class="nexa-section-subtitle" style="margin-bottom:8px;">
+                                    Upload PDF floor plans for this property. You can add multiple floor plans.
+                                </p>
+                                <button type="button" class="nexa-btn nexa-btn-secondary" id="nexa-add-floor-plan-btn" style="margin-bottom:10px;">
+                                    + Add Floor Plan
+                                </button>
+                                
+                                <div id="nexa-floor-plans-container"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Tab: Media (placeholder) -->
@@ -238,10 +250,46 @@
         var $btnClose      = $('#nexa-property-modal-close');
         var $btnCancel     = $('#nexa-cancel-property-btn');
         var $imagesPreview = $('#nexa-images-preview-front');
+        var $floorPlansContainer = $('#nexa-floor-plans-container');
         var $modalTitle    = $modal.find('.nexa-modal-title');
         var $modalSubtitle = $modal.find('.nexa-modal-subtitle');
         var $submitBtn     = $('#nexa-property-form').find('button[type="submit"]');
         var mediaFrame     = null;
+        var floorPlanMediaFrame = null;
+        var floorPlanCounter = 0;
+
+        function createFloorPlanRow(fileUrl, label, order) {
+            fileUrl = fileUrl || '';
+            label = label || '';
+            order = order !== undefined ? order : floorPlanCounter;
+            
+            var $row = $('<div class="nexa-floor-plan-row" style="display:flex; gap:10px; align-items:flex-start; margin-bottom:12px; padding:12px; background:#f9fafb; border-radius:8px;"></div>');
+            
+            $row.append('<input type="hidden" name="floor_plans['+floorPlanCounter+'][file_url]" class="floor-plan-url" value="'+fileUrl+'">');
+            $row.append('<input type="hidden" name="floor_plans['+floorPlanCounter+'][order]" value="'+order+'">');
+            
+            var $labelInput = $('<div style="flex:1;"><label class="nexa-form-label" style="font-size:12px;">Label (optional)</label><input type="text" name="floor_plans['+floorPlanCounter+'][label]" class="nexa-input" placeholder="e.g. Ground Floor" value="'+label+'" style="font-size:13px;"></div>');
+            $row.append($labelInput);
+            
+            var $fileDisplay = $('<div style="flex:2;"><label class="nexa-form-label" style="font-size:12px;">PDF File</label><div class="floor-plan-file-display" style="display:flex; gap:8px; align-items:center;"></div></div>');
+            
+            var $displayInner = $fileDisplay.find('.floor-plan-file-display');
+            if (fileUrl) {
+                var filename = fileUrl.split('/').pop();
+                $displayInner.append('<span class="floor-plan-filename" style="font-size:13px; color:#374151;">📄 '+filename+'</span>');
+            } else {
+                $displayInner.append('<span class="floor-plan-filename" style="font-size:13px; color:#9ca3af;">No file selected</span>');
+            }
+            $displayInner.append('<button type="button" class="nexa-btn nexa-btn-secondary nexa-select-floor-plan-btn" style="font-size:12px; padding:4px 10px;">Select PDF</button>');
+            
+            $row.append($fileDisplay);
+            
+            var $removeBtn = $('<button type="button" class="nexa-remove-floor-plan-btn" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:18px; padding:4px; margin-top:20px;" title="Remove">×</button>');
+            $row.append($removeBtn);
+            
+            floorPlanCounter++;
+            return $row;
+        }
 
         function resetForm() {
             $('#nexa-property-id').val('');
@@ -256,6 +304,8 @@
             $('#nexa-bedrooms').val('');
             $('#nexa-bathrooms').val('');
             $imagesPreview.empty();
+            $floorPlansContainer.empty();
+            floorPlanCounter = 0;
 
             // Reset to Basic tab
             $('.nexa-tab-btn').removeClass('nexa-tab-active');
@@ -301,6 +351,19 @@
                     $thumb.append('<img src="'+url+'">');
                     $thumb.append('<input type="hidden" name="images[]" value="'+url+'">');
                     $imagesPreview.append($thumb);
+                });
+            }
+
+            // Populate floor plans
+            $floorPlansContainer.empty();
+            floorPlanCounter = 0;
+            if (Array.isArray(property.floor_plans)) {
+                property.floor_plans.forEach(function(plan){
+                    var fileUrl = plan.file_url || '';
+                    var label = plan.label || '';
+                    var order = plan.order !== undefined ? plan.order : floorPlanCounter;
+                    var $row = createFloorPlanRow(fileUrl, label, order);
+                    $floorPlansContainer.append($row);
                 });
             }
         }
@@ -413,6 +476,49 @@
             });
 
             mediaFrame.open();
+        });
+
+        // Add new floor plan row
+        $('#nexa-add-floor-plan-btn').on('click', function(e){
+            e.preventDefault();
+            var $row = createFloorPlanRow('', '', floorPlanCounter);
+            $floorPlansContainer.append($row);
+        });
+
+        // Remove floor plan row
+        $floorPlansContainer.on('click', '.nexa-remove-floor-plan-btn', function(e){
+            e.preventDefault();
+            $(this).closest('.nexa-floor-plan-row').remove();
+        });
+
+        // Select PDF for floor plan
+        $floorPlansContainer.on('click', '.nexa-select-floor-plan-btn', function(e){
+            e.preventDefault();
+            var $btn = $(this);
+            var $row = $btn.closest('.nexa-floor-plan-row');
+            
+            var frame = wp.media({
+                title: 'Select Floor Plan PDF',
+                button: { text: 'Use this PDF' },
+                multiple: false,
+                library: {
+                    type: 'application/pdf'
+                }
+            });
+
+            frame.on('select', function(){
+                var attachment = frame.state().get('selection').first().toJSON();
+                if (!attachment.url) return;
+                
+                // Update the hidden input
+                $row.find('.floor-plan-url').val(attachment.url);
+                
+                // Update the display
+                var filename = attachment.url.split('/').pop();
+                $row.find('.floor-plan-filename').text('📄 ' + filename);
+            });
+
+            frame.open();
         });
     });
 })(jQuery);
