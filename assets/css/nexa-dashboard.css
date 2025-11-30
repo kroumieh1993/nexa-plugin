@@ -575,3 +575,29 @@
             margin-top:6px;
         }
     }
+
+    .nexa-floorplans-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .nexa-floorplan-row {
+        border-radius: 10px;
+        border: 1px dashed #e5e7eb;
+        padding: 8px 10px;
+        background: #f9fafb;
+    }
+
+    .nexa-floorplan-row-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 4px;
+    }
+
+    .nexa-floorplan-file {
+        font-size: 11px;
+        color: #6b7280;
+    }
+

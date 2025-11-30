@@ -330,6 +330,32 @@ class Nexa_RE_Shortcodes {
                 $property_id = isset( $_POST['property_id'] ) ? (int) $_POST['property_id'] : 0;
                 $is_edit     = $property_id > 0;
 
+                // Floor plans (PDFs) from form
+                $floor_plans_raw = isset( $_POST['floor_plans'] ) && is_array( $_POST['floor_plans'] )
+                    ? wp_unslash( $_POST['floor_plans'] )
+                    : [];
+
+                $floor_plans = [];
+
+                foreach ( $floor_plans_raw as $plan ) {
+                    $file_url = isset( $plan['file_url'] ) ? trim( $plan['file_url'] ) : '';
+
+                    if ( '' === $file_url ) {
+                        continue;
+                    }
+
+                    $file_url = esc_url_raw( $file_url );
+                    if ( ! $file_url ) {
+                        continue;
+                    }
+
+                    $floor_plans[] = [
+                        'label'     => isset( $plan['label'] ) ? sanitize_text_field( $plan['label'] ) : null,
+                        'file_url'  => $file_url,
+                        'order'     => isset( $plan['order'] ) ? (int) $plan['order'] : 0,
+                    ];
+                }
+
                 $payload = [
                     'title'         => sanitize_text_field( $_POST['title'] ?? '' ),
                     'description'   => wp_kses_post( $_POST['description'] ?? '' ),
@@ -341,6 +367,8 @@ class Nexa_RE_Shortcodes {
                     'price'         => $_POST['price'] !== '' ? (int) $_POST['price'] : null,
                     'bedrooms'      => $_POST['bedrooms'] !== '' ? (int) $_POST['bedrooms'] : null,
                     'bathrooms'     => $_POST['bathrooms'] !== '' ? (int) $_POST['bathrooms'] : null,
+
+                    'floor_plans'   => $floor_plans,
                 ];
 
                 $images = [];
@@ -370,6 +398,7 @@ class Nexa_RE_Shortcodes {
 
             }
         }
+
 
         // 5. Fetch properties for list & stats
         $properties = [];

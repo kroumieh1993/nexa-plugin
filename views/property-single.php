@@ -23,6 +23,21 @@ get_header();
         $area        = $property['area'] ?? '';
         $description = $property['description'] ?? '';
         $images      = [];
+        $floor_plans = [];
+
+        if ( ! empty( $property['floor_plans'] ) && is_array( $property['floor_plans'] ) ) {
+            foreach ( $property['floor_plans'] as $plan ) {
+                if ( empty( $plan['file_url'] ) ) {
+                    continue;
+                }
+
+                $floor_plans[] = [
+                    'label'    => $plan['label'] ?? '',
+                    'file_url' => esc_url( $plan['file_url'] ),
+                ];
+            }
+        }
+
 
         if ( ! empty( $property['images'] ) && is_array( $property['images'] ) ) {
             foreach ( $property['images'] as $img ) {
@@ -134,7 +149,32 @@ get_header();
             <h3>Description</h3>
             <p><?php echo $description ? wp_kses_post( $description ) : 'No description provided.'; ?></p>
         </section>
-    <?php endif; ?>
+        <?php if ( ! empty( $floor_plans ) ) : ?>
+            <section class="nexa-floorplans">
+                <h3 class="nexa-floorplans-title">Floor plans</h3>
+                <ul class="nexa-floorplans-list">
+                    <?php foreach ( $floor_plans as $index => $plan ) :
+                        $label = $plan['label'] ?: sprintf( 'Floor plan %d', $index + 1 );
+                        ?>
+                        <li class="nexa-floorplans-item">
+                            <span class="nexa-floorplans-icon">📄</span>
+                            <div class="nexa-floorplans-text">
+                                <span class="nexa-floorplans-label">
+                                    <?php echo esc_html( $label ); ?>
+                                </span>
+                                <a class="nexa-floorplans-link"
+                                   href="<?php echo esc_url( $plan['file_url'] ); ?>"
+                                   target="_blank"
+                                   rel="noopener">
+                                    View PDF
+                                </a>
+                            </div>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+            </section>
+        <?php endif; // end floor_plans check ?>
+    <?php endif; // end $error check ?>
 </main>
 <script>
 document.addEventListener('DOMContentLoaded', () => {

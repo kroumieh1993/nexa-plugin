@@ -113,8 +113,8 @@
             <button type="button" class="nexa-tab-btn nexa-tab-active" data-tab="basic">
                 Basic Info
             </button>
-            <button type="button" class="nexa-tab-btn nexa-tab-disabled" data-tab="details" disabled>
-                Details (soon)
+            <button type="button" class="nexa-tab-btn" data-tab="details">
+                Details
             </button>
             <button type="button" class="nexa-tab-btn nexa-tab-disabled" data-tab="media" disabled>
                 Media & Docs (soon)
@@ -199,16 +199,42 @@
 
                                 <div id="nexa-images-preview-front" class="nexa-images-preview"></div>
                             </div>
+
+                        </div> <!-- end of nexa-form-col nexa-form-col-side -->
+
                         </div>
+
                     </div>
                 </div>
 
                 <!-- Tab: Details (placeholder) -->
                 <div class="nexa-tab-panel" data-tab-panel="details" style="display:none;">
-                    <p class="nexa-section-subtitle">
-                        Additional details such as amenities, parking, and furnishing will appear here in a future update.
-                    </p>
+
+                    <div class="nexa-form-row" style="margin-bottom:16px;">
+                        <h3 class="nexa-section-title" style="font-size:14px;margin:0 0 4px;">
+                            Additional details
+                        </h3>
+                        <p class="nexa-section-subtitle">
+                            Here we’ll later add amenities, parking, furnishing, etc. For now you can manage floor plans.
+                        </p>
+                    </div>
+
+                    <div class="nexa-card" style="padding:12px 14px;">
+                        <div class="nexa-form-row" style="margin-bottom:10px;">
+                            <label class="nexa-form-label">Floor plans (PDF)</label>
+                            <p class="nexa-section-subtitle" style="margin-bottom:8px;">
+                                Add one or more PDF floor plans for this property.
+                            </p>
+                            <button type="button" class="nexa-btn nexa-btn-secondary" id="nexa-add-floorplan-btn" style="margin-bottom:10px;">
+                                + Add floor plan
+                            </button>
+                        </div>
+
+                        <div id="nexa-floorplans-list" class="nexa-floorplans-list"></div>
+                    </div>
+
                 </div>
+
 
                 <!-- Tab: Media (placeholder) -->
                 <div class="nexa-tab-panel" data-tab-panel="media" style="display:none;">
@@ -242,6 +268,11 @@
         var $modalSubtitle = $modal.find('.nexa-modal-subtitle');
         var $submitBtn     = $('#nexa-property-form').find('button[type="submit"]');
         var mediaFrame     = null;
+        var $floorplansList     = $('#nexa-floorplans-list');
+        var floorplanIndex      = 0;
+        var floorplanMediaFrame = null;
+        var currentFloorplanRow = null;
+
 
         function resetForm() {
             $('#nexa-property-id').val('');
@@ -256,6 +287,9 @@
             $('#nexa-bedrooms').val('');
             $('#nexa-bathrooms').val('');
             $imagesPreview.empty();
+            $floorplansList.empty();
+            floorplanIndex = 0;
+
 
             // Reset to Basic tab
             $('.nexa-tab-btn').removeClass('nexa-tab-active');
@@ -267,6 +301,43 @@
             $modalSubtitle.text('Fill in the details to create a new property for your agency.');
             $submitBtn.text('Save Property');
         }
+
+        function addFloorplanRow() {
+            var idx = floorplanIndex++;
+
+            var $row = $(`
+                <div class="nexa-floorplan-row" data-index="${idx}">
+                    <div class="nexa-form-row" style="margin-bottom:6px;">
+                        <input
+                            class="nexa-input"
+                            type="text"
+                            name="floor_plans[${idx}][label]"
+                            placeholder="Label (e.g. Ground Floor)"
+                        >
+                    </div>
+                    <div class="nexa-floorplan-row-actions">
+                        <button type="button"
+                                class="nexa-btn nexa-btn-secondary nexa-select-floorplan"
+                                data-index="${idx}">
+                            Select PDF
+                        </button>
+                        <span class="nexa-floorplan-file nexa-section-subtitle">
+                            No file selected
+                        </span>
+                        <button type="button"
+                                class="nexa-link-muted nexa-remove-floorplan"
+                                style="margin-left:auto;">
+                            Remove
+                        </button>
+                    </div>
+                    <input type="hidden" name="floor_plans[${idx}][file_url]" value="">
+                    <input type="hidden" name="floor_plans[${idx}][order]" value="${idx}">
+                </div>
+            `);
+
+            $floorplansList.append($row);
+        }
+
 
         function fillFormFromProperty(property) {
             if (!property || typeof property !== 'object') {
@@ -414,6 +485,62 @@
 
             mediaFrame.open();
         });
+        //floor plans
+        $('#nexa-add-floorplan-btn').on('click', function(e){
+            e.preventDefault();
+            addFloorplanRow();
+        });
+
+        $floorplansList.on('click', '.nexa-remove-floorplan', function(e){
+            e.preventDefault();
+            $(this).closest('.nexa-floorplan-row').remove();
+        });
+
+        $floorplansList.on('click', '.nexa-select-floorplan', function(e){
+            e.preventDefault();
+
+            currentFloorplanRow = $(this).closest('.nexa-floorplan-row');
+            if (!currentFloorplanRow.length) {
+                return;
+            }
+
+            if (!floorplanMediaFrame) {
+                floorplanMediaFrame = wp.media({
+                    title: 'Select floor plan PDF',
+                    button: { text: 'Use this PDF' },
+                    library: { type: 'application/pdf' },
+                    multiple: false
+                });
+
+                floorplanMediaFrame.on('select', function(){
+                    var selection = floorplanMediaFrame.state().get('selection');
+                    var attachment = selection.first() ? selection.first().toJSON() : null;
+
+                    if (!attachment || !attachment.url) {
+                        return;
+                    }
+
+                    var fileUrl   = attachment.url;
+                    var fileName  = attachment.filename || 'PDF selected';
+                    var fileTitle = attachment.title || 'Floor plan';
+
+                    currentFloorplanRow.find('.nexa-floorplan-file').text(fileName);
+                    currentFloorplanRow
+                        .find('input[name^="floor_plans"][name$="[file_url]"]')
+                        .val(fileUrl);
+
+                    var $labelInput = currentFloorplanRow
+                        .find('input[name^="floor_plans"][name$="[label]"]');
+
+                    if (!$labelInput.val()) {
+                        $labelInput.val(fileTitle);
+                    }
+                });
+            }
+
+            floorplanMediaFrame.open();
+        });
+
     });
 })(jQuery);
 </script>
