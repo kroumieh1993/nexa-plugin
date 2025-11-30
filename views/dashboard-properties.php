@@ -257,14 +257,6 @@
         var mediaFrame     = null;
         var floorPlanCounter = 0;
 
-        // Helper function to escape HTML entities
-        function escapeHtml(text) {
-            if (!text) return '';
-            var div = document.createElement('div');
-            div.appendChild(document.createTextNode(text));
-            return div.innerHTML;
-        }
-
         function createFloorPlanRow(fileUrl, label, order) {
             fileUrl = fileUrl || '';
             label = label || '';
