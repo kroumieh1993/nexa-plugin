@@ -255,8 +255,15 @@
         var $modalSubtitle = $modal.find('.nexa-modal-subtitle');
         var $submitBtn     = $('#nexa-property-form').find('button[type="submit"]');
         var mediaFrame     = null;
-        var floorPlanMediaFrame = null;
         var floorPlanCounter = 0;
+
+        // Helper function to escape HTML entities
+        function escapeHtml(text) {
+            if (!text) return '';
+            var div = document.createElement('div');
+            div.appendChild(document.createTextNode(text));
+            return div.innerHTML;
+        }
 
         function createFloorPlanRow(fileUrl, label, order) {
             fileUrl = fileUrl || '';
@@ -265,21 +272,31 @@
             
             var $row = $('<div class="nexa-floor-plan-row" style="display:flex; gap:10px; align-items:flex-start; margin-bottom:12px; padding:12px; background:#f9fafb; border-radius:8px;"></div>');
             
-            $row.append('<input type="hidden" name="floor_plans['+floorPlanCounter+'][file_url]" class="floor-plan-url" value="'+fileUrl+'">');
-            $row.append('<input type="hidden" name="floor_plans['+floorPlanCounter+'][order]" value="'+order+'">');
+            var $fileUrlInput = $('<input type="hidden" name="floor_plans['+floorPlanCounter+'][file_url]" class="floor-plan-url">');
+            $fileUrlInput.val(fileUrl);
+            $row.append($fileUrlInput);
             
-            var $labelInput = $('<div style="flex:1;"><label class="nexa-form-label" style="font-size:12px;">Label (optional)</label><input type="text" name="floor_plans['+floorPlanCounter+'][label]" class="nexa-input" placeholder="e.g. Ground Floor" value="'+label+'" style="font-size:13px;"></div>');
-            $row.append($labelInput);
+            var $orderInput = $('<input type="hidden" name="floor_plans['+floorPlanCounter+'][order]">');
+            $orderInput.val(order);
+            $row.append($orderInput);
+            
+            var $labelWrapper = $('<div style="flex:1;"><label class="nexa-form-label" style="font-size:12px;">Label (optional)</label></div>');
+            var $labelInputField = $('<input type="text" name="floor_plans['+floorPlanCounter+'][label]" class="nexa-input" placeholder="e.g. Ground Floor" style="font-size:13px;">');
+            $labelInputField.val(label);
+            $labelWrapper.append($labelInputField);
+            $row.append($labelWrapper);
             
             var $fileDisplay = $('<div style="flex:2;"><label class="nexa-form-label" style="font-size:12px;">PDF File</label><div class="floor-plan-file-display" style="display:flex; gap:8px; align-items:center;"></div></div>');
             
             var $displayInner = $fileDisplay.find('.floor-plan-file-display');
+            var $filenameSpan = $('<span class="floor-plan-filename" style="font-size:13px;"></span>');
             if (fileUrl) {
                 var filename = fileUrl.split('/').pop();
-                $displayInner.append('<span class="floor-plan-filename" style="font-size:13px; color:#374151;">📄 '+filename+'</span>');
+                $filenameSpan.css('color', '#374151').text('📄 ' + filename);
             } else {
-                $displayInner.append('<span class="floor-plan-filename" style="font-size:13px; color:#9ca3af;">No file selected</span>');
+                $filenameSpan.css('color', '#9ca3af').text('No file selected');
             }
+            $displayInner.append($filenameSpan);
             $displayInner.append('<button type="button" class="nexa-btn nexa-btn-secondary nexa-select-floor-plan-btn" style="font-size:12px; padding:4px 10px;">Select PDF</button>');
             
             $row.append($fileDisplay);

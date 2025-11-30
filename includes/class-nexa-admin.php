@@ -512,12 +512,24 @@ class Nexa_RE_Admin {
                     order = order !== undefined ? order : floorPlanCounter;
                     
                     var $row = $('<div class="nexa-floor-plan-row" style="display:flex; gap:10px; align-items:center; margin-bottom:8px; padding:10px; background:#f9f9f9; border-radius:4px;"></div>');
-                    $row.append('<input type="hidden" name="floor_plans['+floorPlanCounter+'][file_url]" class="floor-plan-url" value="'+fileUrl+'">');
-                    $row.append('<input type="hidden" name="floor_plans['+floorPlanCounter+'][order]" value="'+order+'">');
-                    $row.append('<input type="text" name="floor_plans['+floorPlanCounter+'][label]" placeholder="Label (optional)" value="'+label+'" class="regular-text" style="flex:1;">');
+                    
+                    var $fileUrlInput = $('<input type="hidden" name="floor_plans['+floorPlanCounter+'][file_url]" class="floor-plan-url">');
+                    $fileUrlInput.val(fileUrl);
+                    $row.append($fileUrlInput);
+                    
+                    var $orderInput = $('<input type="hidden" name="floor_plans['+floorPlanCounter+'][order]">');
+                    $orderInput.val(order);
+                    $row.append($orderInput);
+                    
+                    var $labelInput = $('<input type="text" name="floor_plans['+floorPlanCounter+'][label]" placeholder="Label (optional)" class="regular-text" style="flex:1;">');
+                    $labelInput.val(label);
+                    $row.append($labelInput);
                     
                     var filename = fileUrl ? fileUrl.split('/').pop() : 'No file selected';
-                    $row.append('<span class="floor-plan-filename" style="flex:1; font-size:13px; color:#666;">📄 '+filename+'</span>');
+                    var $filenameSpan = $('<span class="floor-plan-filename" style="flex:1; font-size:13px; color:#666;"></span>');
+                    $filenameSpan.text('📄 ' + filename);
+                    $row.append($filenameSpan);
+                    
                     $row.append('<button type="button" class="button nexa-select-floor-plan">Select PDF</button>');
                     $row.append('<button type="button" class="button nexa-remove-floor-plan" style="color:#a00;">×</button>');
                     
