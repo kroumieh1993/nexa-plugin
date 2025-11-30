@@ -134,6 +134,40 @@ get_header();
             <h3>Description</h3>
             <p><?php echo $description ? wp_kses_post( $description ) : 'No description provided.'; ?></p>
         </section>
+
+        <?php
+        $floor_plans = [];
+        if ( ! empty( $property['floor_plans'] ) && is_array( $property['floor_plans'] ) ) {
+            $floor_plans = $property['floor_plans'];
+            // Sort by order if available
+            usort( $floor_plans, function( $a, $b ) {
+                $order_a = isset( $a['order'] ) ? (int) $a['order'] : 0;
+                $order_b = isset( $b['order'] ) ? (int) $b['order'] : 0;
+                return $order_a - $order_b;
+            } );
+        }
+        ?>
+
+        <?php if ( ! empty( $floor_plans ) ) : ?>
+            <section class="nexa-floor-plans">
+                <h3>Floor Plans</h3>
+                <div class="nexa-floor-plans-list">
+                    <?php foreach ( $floor_plans as $index => $plan ) : ?>
+                        <?php
+                        $file_url = isset( $plan['file_url'] ) ? esc_url( $plan['file_url'] ) : '';
+                        $label    = isset( $plan['label'] ) && ! empty( $plan['label'] ) ? esc_html( $plan['label'] ) : 'Floor Plan ' . ( $index + 1 );
+                        ?>
+                        <?php if ( $file_url ) : ?>
+                            <a href="<?php echo $file_url; ?>" class="nexa-floor-plan-item" target="_blank" rel="noopener noreferrer">
+                                <span class="nexa-floor-plan-icon">📄</span>
+                                <span class="nexa-floor-plan-label"><?php echo $label; ?></span>
+                                <span class="nexa-floor-plan-action">View PDF</span>
+                            </a>
+                        <?php endif; ?>
+                    <?php endforeach; ?>
+                </div>
+            </section>
+        <?php endif; ?>
     <?php endif; ?>
 </main>
 <script>
