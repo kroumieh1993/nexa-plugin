@@ -263,6 +263,22 @@ class Nexa_RE_Admin {
             }
             $payload['images'] = $images;
 
+            // floor_plans[]
+            $floor_plans = [];
+            if ( ! empty( $_POST['floor_plans'] ) && is_array( $_POST['floor_plans'] ) ) {
+                foreach ( $_POST['floor_plans'] as $plan ) {
+                    $file_url = isset( $plan['file_url'] ) ? esc_url_raw( $plan['file_url'] ) : '';
+                    if ( $file_url ) {
+                        $floor_plans[] = [
+                            'file_url' => $file_url,
+                            'label'    => isset( $plan['label'] ) ? sanitize_text_field( $plan['label'] ) : '',
+                            'order'    => isset( $plan['order'] ) ? (int) $plan['order'] : 0,
+                        ];
+                    }
+                }
+            }
+            $payload['floor_plans'] = $floor_plans;
+
             $args = [
                 'headers' => [
                     'X-AGENCY-TOKEN' => $api_token,
@@ -310,6 +326,7 @@ class Nexa_RE_Admin {
         $bedrooms    = $property['bedrooms'] ?? '';
         $bathrooms   = $property['bathrooms'] ?? '';
         $images      = [];
+        $floor_plans = [];
 
         if ( ! empty( $property['images'] ) && is_array( $property['images'] ) ) {
             foreach ( $property['images'] as $img ) {
@@ -317,6 +334,10 @@ class Nexa_RE_Admin {
                     $images[] = $img['url'];
                 }
             }
+        }
+
+        if ( ! empty( $property['floor_plans'] ) && is_array( $property['floor_plans'] ) ) {
+            $floor_plans = $property['floor_plans'];
         }
 
         ?>
@@ -423,6 +444,28 @@ class Nexa_RE_Admin {
                                 </div>
                             <?php endforeach; ?>
                         </div>
+
+                        <h2 style="margin-top:24px;">Floor Plans (PDF)</h2>
+                        <p>Upload PDF floor plans for this property.</p>
+                        <button type="button" class="button" id="nexa-add-floor-plan">+ Add Floor Plan</button>
+
+                        <div id="nexa-floor-plans-container" style="margin-top:10px;">
+                            <?php foreach ( $floor_plans as $index => $plan ) : ?>
+                                <div class="nexa-floor-plan-row" style="display:flex; gap:10px; align-items:center; margin-bottom:8px; padding:10px; background:#f9f9f9; border-radius:4px;">
+                                    <input type="hidden" name="floor_plans[<?php echo $index; ?>][file_url]" class="floor-plan-url" value="<?php echo esc_attr( $plan['file_url'] ?? '' ); ?>">
+                                    <input type="hidden" name="floor_plans[<?php echo $index; ?>][order]" value="<?php echo intval( $plan['order'] ?? $index ); ?>">
+                                    <input type="text" name="floor_plans[<?php echo $index; ?>][label]" placeholder="Label (optional)" value="<?php echo esc_attr( $plan['label'] ?? '' ); ?>" class="regular-text" style="flex:1;">
+                                    <span class="floor-plan-filename" style="flex:1; font-size:13px; color:#666;">
+                                        <?php 
+                                        $filename = ! empty( $plan['file_url'] ) ? basename( $plan['file_url'] ) : 'No file selected';
+                                        echo '📄 ' . esc_html( $filename ); 
+                                        ?>
+                                    </span>
+                                    <button type="button" class="button nexa-select-floor-plan">Select PDF</button>
+                                    <button type="button" class="button nexa-remove-floor-plan" style="color:#a00;">×</button>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
                     </div>
                 </div>
 
@@ -455,6 +498,71 @@ class Nexa_RE_Admin {
                             thumb.append('<input type="hidden" name="images[]" value="'+attachment.url+'">');
                             container.append(thumb);
                         });
+                    });
+
+                    frame.open();
+                });
+
+                // Floor plans counter
+                var floorPlanCounter = $('#nexa-floor-plans-container .nexa-floor-plan-row').length;
+
+                function createFloorPlanRow(fileUrl, label, order) {
+                    fileUrl = fileUrl || '';
+                    label = label || '';
+                    order = order !== undefined ? order : floorPlanCounter;
+                    
+                    var $row = $('<div class="nexa-floor-plan-row" style="display:flex; gap:10px; align-items:center; margin-bottom:8px; padding:10px; background:#f9f9f9; border-radius:4px;"></div>');
+                    $row.append('<input type="hidden" name="floor_plans['+floorPlanCounter+'][file_url]" class="floor-plan-url" value="'+fileUrl+'">');
+                    $row.append('<input type="hidden" name="floor_plans['+floorPlanCounter+'][order]" value="'+order+'">');
+                    $row.append('<input type="text" name="floor_plans['+floorPlanCounter+'][label]" placeholder="Label (optional)" value="'+label+'" class="regular-text" style="flex:1;">');
+                    
+                    var filename = fileUrl ? fileUrl.split('/').pop() : 'No file selected';
+                    $row.append('<span class="floor-plan-filename" style="flex:1; font-size:13px; color:#666;">📄 '+filename+'</span>');
+                    $row.append('<button type="button" class="button nexa-select-floor-plan">Select PDF</button>');
+                    $row.append('<button type="button" class="button nexa-remove-floor-plan" style="color:#a00;">×</button>');
+                    
+                    floorPlanCounter++;
+                    return $row;
+                }
+
+                // Add new floor plan row
+                $('#nexa-add-floor-plan').on('click', function(e) {
+                    e.preventDefault();
+                    var $row = createFloorPlanRow('', '', floorPlanCounter);
+                    $('#nexa-floor-plans-container').append($row);
+                });
+
+                // Remove floor plan row
+                $('#nexa-floor-plans-container').on('click', '.nexa-remove-floor-plan', function(e) {
+                    e.preventDefault();
+                    $(this).closest('.nexa-floor-plan-row').remove();
+                });
+
+                // Select PDF for floor plan
+                $('#nexa-floor-plans-container').on('click', '.nexa-select-floor-plan', function(e) {
+                    e.preventDefault();
+                    var $btn = $(this);
+                    var $row = $btn.closest('.nexa-floor-plan-row');
+                    
+                    var frame = wp.media({
+                        title: 'Select Floor Plan PDF',
+                        button: { text: 'Use this PDF' },
+                        multiple: false,
+                        library: {
+                            type: 'application/pdf'
+                        }
+                    });
+
+                    frame.on('select', function() {
+                        var attachment = frame.state().get('selection').first().toJSON();
+                        if (!attachment.url) return;
+                        
+                        // Update the hidden input
+                        $row.find('.floor-plan-url').val(attachment.url);
+                        
+                        // Update the display
+                        var filename = attachment.url.split('/').pop();
+                        $row.find('.floor-plan-filename').text('📄 ' + filename);
                     });
 
                     frame.open();

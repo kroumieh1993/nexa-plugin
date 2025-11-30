@@ -354,6 +354,22 @@ class Nexa_RE_Shortcodes {
                 }
                 $payload['images'] = $images;
 
+                // Handle floor plans
+                $floor_plans = [];
+                if ( ! empty( $_POST['floor_plans'] ) && is_array( $_POST['floor_plans'] ) ) {
+                    foreach ( $_POST['floor_plans'] as $plan ) {
+                        $file_url = isset( $plan['file_url'] ) ? esc_url_raw( $plan['file_url'] ) : '';
+                        if ( $file_url ) {
+                            $floor_plans[] = [
+                                'file_url' => $file_url,
+                                'label'    => isset( $plan['label'] ) ? sanitize_text_field( $plan['label'] ) : '',
+                                'order'    => isset( $plan['order'] ) ? (int) $plan['order'] : 0,
+                            ];
+                        }
+                    }
+                }
+                $payload['floor_plans'] = $floor_plans;
+
                 // Use API client
                 if ( $is_edit ) {
                     $result = $api->update_property( $property_id, $payload );
