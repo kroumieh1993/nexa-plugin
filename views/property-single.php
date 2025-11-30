@@ -141,8 +141,8 @@ get_header();
             $floor_plans = $property['floor_plans'];
             // Sort by order if available
             usort( $floor_plans, function( $a, $b ) {
-                $order_a = isset( $a['order'] ) ? (int) $a['order'] : 0;
-                $order_b = isset( $b['order'] ) ? (int) $b['order'] : 0;
+                $order_a = is_array( $a ) && isset( $a['order'] ) ? (int) $a['order'] : 0;
+                $order_b = is_array( $b ) && isset( $b['order'] ) ? (int) $b['order'] : 0;
                 return $order_a - $order_b;
             } );
         }
@@ -159,7 +159,7 @@ get_header();
                         ?>
                         <?php if ( $file_url ) : ?>
                             <a href="<?php echo $file_url; ?>" class="nexa-floor-plan-item" target="_blank" rel="noopener noreferrer">
-                                <span class="nexa-floor-plan-icon">📄</span>
+                                <span class="nexa-floor-plan-icon" aria-hidden="true">📄</span>
                                 <span class="nexa-floor-plan-label"><?php echo $label; ?></span>
                                 <span class="nexa-floor-plan-action">View PDF</span>
                             </a>
