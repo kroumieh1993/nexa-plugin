@@ -61,18 +61,30 @@ class Nexa_RE_Api_Client {
     public function list_properties( array $filters = [] ) {
         $path = '/properties';
         
-        // Build query string from filters
-        $query_params = array_filter( [
-            'city'      => isset( $filters['city'] ) ? sanitize_text_field( $filters['city'] ) : '',
-            'category'  => isset( $filters['category'] ) ? sanitize_text_field( $filters['category'] ) : '',
-            'type'      => isset( $filters['type'] ) ? sanitize_text_field( $filters['type'] ) : '',
-            'min_price' => isset( $filters['min_price'] ) && $filters['min_price'] !== '' ? (int) $filters['min_price'] : '',
-            'max_price' => isset( $filters['max_price'] ) && $filters['max_price'] !== '' ? (int) $filters['max_price'] : '',
-            'bedrooms'  => isset( $filters['bedrooms'] ) && $filters['bedrooms'] !== '' ? (int) $filters['bedrooms'] : '',
-            'bathrooms' => isset( $filters['bathrooms'] ) && $filters['bathrooms'] !== '' ? (int) $filters['bathrooms'] : '',
-        ], function( $value ) {
-            return $value !== '' && $value !== null;
-        } );
+        // Build query string from filters, only including non-empty values
+        $query_params = [];
+        
+        if ( ! empty( $filters['city'] ) ) {
+            $query_params['city'] = sanitize_text_field( $filters['city'] );
+        }
+        if ( ! empty( $filters['category'] ) ) {
+            $query_params['category'] = sanitize_text_field( $filters['category'] );
+        }
+        if ( ! empty( $filters['type'] ) ) {
+            $query_params['type'] = sanitize_text_field( $filters['type'] );
+        }
+        if ( isset( $filters['min_price'] ) && $filters['min_price'] !== '' ) {
+            $query_params['min_price'] = absint( $filters['min_price'] );
+        }
+        if ( isset( $filters['max_price'] ) && $filters['max_price'] !== '' ) {
+            $query_params['max_price'] = absint( $filters['max_price'] );
+        }
+        if ( isset( $filters['bedrooms'] ) && $filters['bedrooms'] !== '' ) {
+            $query_params['bedrooms'] = absint( $filters['bedrooms'] );
+        }
+        if ( isset( $filters['bathrooms'] ) && $filters['bathrooms'] !== '' ) {
+            $query_params['bathrooms'] = absint( $filters['bathrooms'] );
+        }
         
         if ( ! empty( $query_params ) ) {
             $path .= '?' . http_build_query( $query_params );
