@@ -51,9 +51,8 @@ class Nexa_RE_Shortcodes {
         $filter_bedrooms = isset( $_GET['nexa_bedrooms'] ) ? sanitize_text_field( $_GET['nexa_bedrooms'] ) : '';
         $filter_bathrooms = isset( $_GET['nexa_bathrooms'] ) ? sanitize_text_field( $_GET['nexa_bathrooms'] ) : '';
 
-        $endpoint = $api_url . '/properties';
-
-        $query_args = array_filter( [
+        // Build filters array for API client
+        $filters = array_filter( [
             'city'      => $filter_city,
             'category'  => $filter_category,
             'type'      => $filter_type,
@@ -61,41 +60,22 @@ class Nexa_RE_Shortcodes {
             'max_price' => $filter_max,
             'bedrooms'  => $filter_bedrooms,
             'bathrooms' => $filter_bathrooms,
-            'per_page'  => $atts['per_page'],
         ] );
 
-        if ( ! empty( $query_args ) ) {
-            $endpoint = add_query_arg( $query_args, $endpoint );
-        }
+        // Use centralized API client
+        $api = new Nexa_RE_Api_Client();
+        $result = $api->list_properties( $filters );
 
-        $response = wp_remote_get( $endpoint, [
-            'headers' => [
-                'X-AGENCY-TOKEN' => $api_token,
-                'Accept'         => 'application/json',
-            ],
-            'timeout' => 10,
-        ] );
-
-        if ( is_wp_error( $response ) ) {
+        if ( ! $result['ok'] ) {
             if ( current_user_can( 'manage_options' ) ) {
-                return '<p>Error connecting to Nexa API: ' . esc_html( $response->get_error_message() ) . '</p>';
+                $error_msg = $result['error'] ? $result['error'] : 'API error (' . $result['code'] . ')';
+                return '<p>Error connecting to Nexa API: ' . esc_html( $error_msg ) . '</p>';
             }
             return '';
         }
-
-        $code = wp_remote_retrieve_response_code( $response );
-        $body = wp_remote_retrieve_body( $response );
-
-        if ( $code !== 200 ) {
-            if ( current_user_can( 'manage_options' ) ) {
-                return '<p>Nexa API returned error: ' . esc_html( $code ) . '</p>';
-            }
-            return '';
-        }
-
-        $data = json_decode( $body, true );
 
         // If Laravel uses pagination, we expect ["data"]; otherwise use whole array
+        $data = $result['data'];
         $properties = $data['data'] ?? $data;
         
         // Determine if filter form should be shown
@@ -158,7 +138,18 @@ class Nexa_RE_Shortcodes {
                     </div>
                     <div class="nexa-filter-actions">
                         <button type="submit" class="nexa-filter-btn nexa-filter-btn-primary">Search Properties</button>
-                        <a href="<?php echo esc_url( strtok( $_SERVER['REQUEST_URI'], '?' ) ); ?>" class="nexa-filter-btn nexa-filter-btn-secondary">Clear Filters</a>
+                        <?php
+                        $clear_url = remove_query_arg( [
+                            'nexa_city',
+                            'nexa_category',
+                            'nexa_type',
+                            'nexa_min_price',
+                            'nexa_max_price',
+                            'nexa_bedrooms',
+                            'nexa_bathrooms',
+                        ] );
+                        ?>
+                        <a href="<?php echo esc_url( $clear_url ); ?>" class="nexa-filter-btn nexa-filter-btn-secondary">Clear Filters</a>
                     </div>
                 </form>
             </div>
