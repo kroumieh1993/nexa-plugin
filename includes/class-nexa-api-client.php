@@ -62,28 +62,29 @@ class Nexa_RE_Api_Client {
         $path = '/properties';
         
         // Build query string from filters, only including non-empty values
+        // Note: Filters should be pre-validated before calling this method
         $query_params = [];
         
         if ( ! empty( $filters['city'] ) ) {
-            $query_params['city'] = sanitize_text_field( $filters['city'] );
+            $query_params['city'] = $filters['city'];
         }
         if ( ! empty( $filters['category'] ) ) {
-            $query_params['category'] = sanitize_text_field( $filters['category'] );
+            $query_params['category'] = $filters['category'];
         }
         if ( ! empty( $filters['type'] ) ) {
-            $query_params['type'] = sanitize_text_field( $filters['type'] );
+            $query_params['type'] = $filters['type'];
         }
         if ( isset( $filters['min_price'] ) && $filters['min_price'] !== '' ) {
-            $query_params['min_price'] = absint( $filters['min_price'] );
+            $query_params['min_price'] = (int) $filters['min_price'];
         }
         if ( isset( $filters['max_price'] ) && $filters['max_price'] !== '' ) {
-            $query_params['max_price'] = absint( $filters['max_price'] );
+            $query_params['max_price'] = (int) $filters['max_price'];
         }
         if ( isset( $filters['bedrooms'] ) && $filters['bedrooms'] !== '' ) {
-            $query_params['bedrooms'] = absint( $filters['bedrooms'] );
+            $query_params['bedrooms'] = (int) $filters['bedrooms'];
         }
         if ( isset( $filters['bathrooms'] ) && $filters['bathrooms'] !== '' ) {
-            $query_params['bathrooms'] = absint( $filters['bathrooms'] );
+            $query_params['bathrooms'] = (int) $filters['bathrooms'];
         }
         
         if ( ! empty( $query_params ) ) {

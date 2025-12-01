@@ -47,11 +47,30 @@ class Nexa_RE_Shortcodes {
         $filter_category = isset( $_GET['nexa_category'] ) ? sanitize_text_field( $_GET['nexa_category'] ) : $atts['category'];
         $filter_type     = isset( $_GET['nexa_type'] ) ? sanitize_text_field( $_GET['nexa_type'] ) : $atts['property_type'];
         
-        // Numeric filters: only set if provided and valid
-        $filter_min       = isset( $_GET['nexa_min_price'] ) && $_GET['nexa_min_price'] !== '' ? absint( $_GET['nexa_min_price'] ) : ( $atts['min_price'] !== '' ? absint( $atts['min_price'] ) : '' );
-        $filter_max       = isset( $_GET['nexa_max_price'] ) && $_GET['nexa_max_price'] !== '' ? absint( $_GET['nexa_max_price'] ) : ( $atts['max_price'] !== '' ? absint( $atts['max_price'] ) : '' );
-        $filter_bedrooms  = isset( $_GET['nexa_bedrooms'] ) && $_GET['nexa_bedrooms'] !== '' ? absint( $_GET['nexa_bedrooms'] ) : '';
-        $filter_bathrooms = isset( $_GET['nexa_bathrooms'] ) && $_GET['nexa_bathrooms'] !== '' ? absint( $_GET['nexa_bathrooms'] ) : '';
+        // Numeric filters: validate and keep as strings for form value comparison
+        $filter_min = '';
+        if ( isset( $_GET['nexa_min_price'] ) && $_GET['nexa_min_price'] !== '' ) {
+            $filter_min = (string) absint( $_GET['nexa_min_price'] );
+        } elseif ( $atts['min_price'] !== '' ) {
+            $filter_min = (string) absint( $atts['min_price'] );
+        }
+        
+        $filter_max = '';
+        if ( isset( $_GET['nexa_max_price'] ) && $_GET['nexa_max_price'] !== '' ) {
+            $filter_max = (string) absint( $_GET['nexa_max_price'] );
+        } elseif ( $atts['max_price'] !== '' ) {
+            $filter_max = (string) absint( $atts['max_price'] );
+        }
+        
+        $filter_bedrooms = '';
+        if ( isset( $_GET['nexa_bedrooms'] ) && $_GET['nexa_bedrooms'] !== '' ) {
+            $filter_bedrooms = (string) absint( $_GET['nexa_bedrooms'] );
+        }
+        
+        $filter_bathrooms = '';
+        if ( isset( $_GET['nexa_bathrooms'] ) && $_GET['nexa_bathrooms'] !== '' ) {
+            $filter_bathrooms = (string) absint( $_GET['nexa_bathrooms'] );
+        }
 
         // Build filters array for API client
         $filters = array_filter( [
