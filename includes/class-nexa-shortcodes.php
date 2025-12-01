@@ -28,6 +28,7 @@ class Nexa_RE_Shortcodes {
             'min_price'     => '',
             'max_price'     => '',
             'per_page'      => '10',
+            'show_filter'   => 'true',
         ], $atts, 'nexa_properties' );
 
         // Fixed API URL from settings class
@@ -41,15 +42,26 @@ class Nexa_RE_Shortcodes {
             return '';
         }
 
+        // Get filter values from URL parameters (user submitted filters) or shortcode attributes
+        $filter_city     = isset( $_GET['nexa_city'] ) ? sanitize_text_field( $_GET['nexa_city'] ) : $atts['city'];
+        $filter_category = isset( $_GET['nexa_category'] ) ? sanitize_text_field( $_GET['nexa_category'] ) : $atts['category'];
+        $filter_type     = isset( $_GET['nexa_type'] ) ? sanitize_text_field( $_GET['nexa_type'] ) : $atts['property_type'];
+        $filter_min      = isset( $_GET['nexa_min_price'] ) ? sanitize_text_field( $_GET['nexa_min_price'] ) : $atts['min_price'];
+        $filter_max      = isset( $_GET['nexa_max_price'] ) ? sanitize_text_field( $_GET['nexa_max_price'] ) : $atts['max_price'];
+        $filter_bedrooms = isset( $_GET['nexa_bedrooms'] ) ? sanitize_text_field( $_GET['nexa_bedrooms'] ) : '';
+        $filter_bathrooms = isset( $_GET['nexa_bathrooms'] ) ? sanitize_text_field( $_GET['nexa_bathrooms'] ) : '';
+
         $endpoint = $api_url . '/properties';
 
         $query_args = array_filter( [
-            'city'          => $atts['city'],
-            'category'      => $atts['category'],
-            'property_type' => $atts['property_type'],
-            'min_price'     => $atts['min_price'],
-            'max_price'     => $atts['max_price'],
-            'per_page'      => $atts['per_page'],
+            'city'      => $filter_city,
+            'category'  => $filter_category,
+            'type'      => $filter_type,
+            'min_price' => $filter_min,
+            'max_price' => $filter_max,
+            'bedrooms'  => $filter_bedrooms,
+            'bathrooms' => $filter_bathrooms,
+            'per_page'  => $atts['per_page'],
         ] );
 
         if ( ! empty( $query_args ) ) {
@@ -85,14 +97,76 @@ class Nexa_RE_Shortcodes {
 
         // If Laravel uses pagination, we expect ["data"]; otherwise use whole array
         $properties = $data['data'] ?? $data;
-
-        if ( empty( $properties ) || ! is_array( $properties ) ) {
-            return '<p>No properties found.</p>';
-        }
+        
+        // Determine if filter form should be shown
+        $show_filter = filter_var( $atts['show_filter'], FILTER_VALIDATE_BOOLEAN );
 
         ob_start();
         ?>
         <div class="nexa-properties-wrapper">
+            <?php if ( $show_filter ) : ?>
+            <div class="nexa-properties-filter">
+                <form method="get" class="nexa-filter-form">
+                    <div class="nexa-filter-row">
+                        <div class="nexa-filter-field">
+                            <label for="nexa-filter-city">City</label>
+                            <input type="text" id="nexa-filter-city" name="nexa_city" value="<?php echo esc_attr( $filter_city ); ?>" placeholder="Any city">
+                        </div>
+                        <div class="nexa-filter-field">
+                            <label for="nexa-filter-category">Category</label>
+                            <select id="nexa-filter-category" name="nexa_category">
+                                <option value="">All</option>
+                                <option value="rent" <?php selected( $filter_category, 'rent' ); ?>>Rent</option>
+                                <option value="buy" <?php selected( $filter_category, 'buy' ); ?>>Buy</option>
+                            </select>
+                        </div>
+                        <div class="nexa-filter-field">
+                            <label for="nexa-filter-type">Property Type</label>
+                            <input type="text" id="nexa-filter-type" name="nexa_type" value="<?php echo esc_attr( $filter_type ); ?>" placeholder="e.g. Apartment">
+                        </div>
+                    </div>
+                    <div class="nexa-filter-row">
+                        <div class="nexa-filter-field">
+                            <label for="nexa-filter-min-price">Min Price</label>
+                            <input type="number" id="nexa-filter-min-price" name="nexa_min_price" value="<?php echo esc_attr( $filter_min ); ?>" placeholder="0" min="0">
+                        </div>
+                        <div class="nexa-filter-field">
+                            <label for="nexa-filter-max-price">Max Price</label>
+                            <input type="number" id="nexa-filter-max-price" name="nexa_max_price" value="<?php echo esc_attr( $filter_max ); ?>" placeholder="Any" min="0">
+                        </div>
+                        <div class="nexa-filter-field">
+                            <label for="nexa-filter-bedrooms">Bedrooms</label>
+                            <select id="nexa-filter-bedrooms" name="nexa_bedrooms">
+                                <option value="">Any</option>
+                                <option value="1" <?php selected( $filter_bedrooms, '1' ); ?>>1+</option>
+                                <option value="2" <?php selected( $filter_bedrooms, '2' ); ?>>2+</option>
+                                <option value="3" <?php selected( $filter_bedrooms, '3' ); ?>>3+</option>
+                                <option value="4" <?php selected( $filter_bedrooms, '4' ); ?>>4+</option>
+                                <option value="5" <?php selected( $filter_bedrooms, '5' ); ?>>5+</option>
+                            </select>
+                        </div>
+                        <div class="nexa-filter-field">
+                            <label for="nexa-filter-bathrooms">Bathrooms</label>
+                            <select id="nexa-filter-bathrooms" name="nexa_bathrooms">
+                                <option value="">Any</option>
+                                <option value="1" <?php selected( $filter_bathrooms, '1' ); ?>>1+</option>
+                                <option value="2" <?php selected( $filter_bathrooms, '2' ); ?>>2+</option>
+                                <option value="3" <?php selected( $filter_bathrooms, '3' ); ?>>3+</option>
+                                <option value="4" <?php selected( $filter_bathrooms, '4' ); ?>>4+</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="nexa-filter-actions">
+                        <button type="submit" class="nexa-filter-btn nexa-filter-btn-primary">Search Properties</button>
+                        <a href="<?php echo esc_url( strtok( $_SERVER['REQUEST_URI'], '?' ) ); ?>" class="nexa-filter-btn nexa-filter-btn-secondary">Clear Filters</a>
+                    </div>
+                </form>
+            </div>
+            <?php endif; ?>
+            
+            <?php if ( empty( $properties ) || ! is_array( $properties ) ) : ?>
+                <p class="nexa-no-results">No properties found matching your criteria.</p>
+            <?php else : ?>
             <div class="nexa-properties-grid">
                 <?php foreach ( $properties as $property ) :
                     $first_image = '';
@@ -144,6 +218,7 @@ class Nexa_RE_Shortcodes {
                     </a>
                 <?php endforeach; ?>
             </div>
+            <?php endif; ?>
         </div>
 
         <style>
@@ -270,6 +345,111 @@ class Nexa_RE_Shortcodes {
             @media (max-width: 640px) {
                 .nexa-properties-grid {
                     grid-template-columns: 1fr;
+                }
+            }
+            
+            /* Filter Form Styles */
+            .nexa-properties-filter {
+                background: #ffffff;
+                border-radius: 16px;
+                padding: 24px;
+                margin-bottom: 32px;
+                box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
+                border: 1px solid #e2e8f0;
+            }
+            .nexa-filter-form {
+                display: flex;
+                flex-direction: column;
+                gap: 20px;
+            }
+            .nexa-filter-row {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+                gap: 16px;
+            }
+            .nexa-filter-field {
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+            }
+            .nexa-filter-field label {
+                font-size: 13px;
+                font-weight: 600;
+                color: #374151;
+            }
+            .nexa-filter-field input,
+            .nexa-filter-field select {
+                padding: 10px 14px;
+                border: 1px solid #d1d5db;
+                border-radius: 8px;
+                font-size: 14px;
+                color: #1f2937;
+                background: #f9fafb;
+                transition: border-color 0.15s ease, box-shadow 0.15s ease;
+            }
+            .nexa-filter-field input:focus,
+            .nexa-filter-field select:focus {
+                outline: none;
+                border-color: #4f46e5;
+                box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+                background: #ffffff;
+            }
+            .nexa-filter-field input::placeholder {
+                color: #9ca3af;
+            }
+            .nexa-filter-actions {
+                display: flex;
+                gap: 12px;
+                flex-wrap: wrap;
+                padding-top: 8px;
+            }
+            .nexa-filter-btn {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                padding: 12px 24px;
+                border-radius: 8px;
+                font-size: 14px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.15s ease;
+                text-decoration: none;
+                border: none;
+            }
+            .nexa-filter-btn-primary {
+                background: #4f46e5;
+                color: #ffffff;
+            }
+            .nexa-filter-btn-primary:hover {
+                background: #4338ca;
+            }
+            .nexa-filter-btn-secondary {
+                background: #f3f4f6;
+                color: #374151;
+                border: 1px solid #d1d5db;
+            }
+            .nexa-filter-btn-secondary:hover {
+                background: #e5e7eb;
+            }
+            .nexa-no-results {
+                text-align: center;
+                color: #64748b;
+                font-size: 16px;
+                padding: 48px 24px;
+                background: #f8fafc;
+                border-radius: 12px;
+                border: 1px dashed #cbd5e1;
+            }
+            
+            @media (max-width: 640px) {
+                .nexa-filter-row {
+                    grid-template-columns: 1fr;
+                }
+                .nexa-filter-actions {
+                    flex-direction: column;
+                }
+                .nexa-filter-btn {
+                    width: 100%;
                 }
             }
         </style>
