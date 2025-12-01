@@ -46,10 +46,12 @@ class Nexa_RE_Shortcodes {
         $filter_city     = isset( $_GET['nexa_city'] ) ? sanitize_text_field( $_GET['nexa_city'] ) : $atts['city'];
         $filter_category = isset( $_GET['nexa_category'] ) ? sanitize_text_field( $_GET['nexa_category'] ) : $atts['category'];
         $filter_type     = isset( $_GET['nexa_type'] ) ? sanitize_text_field( $_GET['nexa_type'] ) : $atts['property_type'];
-        $filter_min      = isset( $_GET['nexa_min_price'] ) ? sanitize_text_field( $_GET['nexa_min_price'] ) : $atts['min_price'];
-        $filter_max      = isset( $_GET['nexa_max_price'] ) ? sanitize_text_field( $_GET['nexa_max_price'] ) : $atts['max_price'];
-        $filter_bedrooms = isset( $_GET['nexa_bedrooms'] ) ? sanitize_text_field( $_GET['nexa_bedrooms'] ) : '';
-        $filter_bathrooms = isset( $_GET['nexa_bathrooms'] ) ? sanitize_text_field( $_GET['nexa_bathrooms'] ) : '';
+        
+        // Numeric filters: only set if provided and valid
+        $filter_min       = isset( $_GET['nexa_min_price'] ) && $_GET['nexa_min_price'] !== '' ? absint( $_GET['nexa_min_price'] ) : ( $atts['min_price'] !== '' ? absint( $atts['min_price'] ) : '' );
+        $filter_max       = isset( $_GET['nexa_max_price'] ) && $_GET['nexa_max_price'] !== '' ? absint( $_GET['nexa_max_price'] ) : ( $atts['max_price'] !== '' ? absint( $atts['max_price'] ) : '' );
+        $filter_bedrooms  = isset( $_GET['nexa_bedrooms'] ) && $_GET['nexa_bedrooms'] !== '' ? absint( $_GET['nexa_bedrooms'] ) : '';
+        $filter_bathrooms = isset( $_GET['nexa_bathrooms'] ) && $_GET['nexa_bathrooms'] !== '' ? absint( $_GET['nexa_bathrooms'] ) : '';
 
         // Build filters array for API client
         $filters = array_filter( [
