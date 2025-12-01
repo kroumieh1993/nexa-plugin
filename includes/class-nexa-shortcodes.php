@@ -365,66 +365,71 @@ class Nexa_RE_Shortcodes {
             /* Filter Form Styles */
             .nexa-properties-filter {
                 background: #ffffff;
-                border-radius: 16px;
-                padding: 24px;
-                margin-bottom: 32px;
-                box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
-                border: 1px solid #e2e8f0;
+                border-radius: 4px;
+                padding: 20px 24px;
+                margin-bottom: 28px;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+                border: 1px solid #e5e7eb;
             }
             .nexa-filter-form {
                 display: flex;
                 flex-direction: column;
-                gap: 20px;
+                gap: 16px;
             }
             .nexa-filter-row {
                 display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-                gap: 16px;
+                grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+                gap: 12px;
+                align-items: end;
             }
             .nexa-filter-field {
                 display: flex;
                 flex-direction: column;
-                gap: 6px;
+                gap: 4px;
             }
             .nexa-filter-field label {
-                font-size: 13px;
-                font-weight: 600;
-                color: #374151;
+                font-size: 12px;
+                font-weight: 500;
+                color: #6b7280;
+                text-transform: uppercase;
+                letter-spacing: 0.025em;
             }
             .nexa-filter-field input,
             .nexa-filter-field select {
-                padding: 10px 14px;
+                padding: 8px 12px;
                 border: 1px solid #d1d5db;
-                border-radius: 8px;
+                border-radius: 4px;
                 font-size: 14px;
                 color: #1f2937;
-                background: #f9fafb;
+                background: #ffffff;
                 transition: border-color 0.15s ease, box-shadow 0.15s ease;
+                height: 40px;
             }
             .nexa-filter-field input:focus,
             .nexa-filter-field select:focus {
                 outline: none;
                 border-color: #4f46e5;
-                box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
-                background: #ffffff;
+                box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
             }
             .nexa-filter-field input::placeholder {
                 color: #9ca3af;
             }
             .nexa-filter-actions {
                 display: flex;
-                gap: 12px;
+                gap: 10px;
                 flex-wrap: wrap;
-                padding-top: 8px;
+                padding-top: 4px;
+                border-top: 1px solid #f3f4f6;
+                margin-top: 4px;
             }
             .nexa-filter-btn {
                 display: inline-flex;
                 align-items: center;
                 justify-content: center;
-                padding: 12px 24px;
-                border-radius: 8px;
+                padding: 10px 20px;
+                border-radius: 4px;
                 font-size: 14px;
-                font-weight: 600;
+                font-weight: 500;
                 cursor: pointer;
                 transition: all 0.15s ease;
                 text-decoration: none;
@@ -438,32 +443,38 @@ class Nexa_RE_Shortcodes {
                 background: #4338ca;
             }
             .nexa-filter-btn-secondary {
-                background: #f3f4f6;
-                color: #374151;
+                background: #ffffff;
+                color: #6b7280;
                 border: 1px solid #d1d5db;
             }
             .nexa-filter-btn-secondary:hover {
-                background: #e5e7eb;
+                background: #f9fafb;
+                color: #374151;
             }
             .nexa-no-results {
                 text-align: center;
-                color: #64748b;
-                font-size: 16px;
-                padding: 48px 24px;
-                background: #f8fafc;
-                border-radius: 12px;
-                border: 1px dashed #cbd5e1;
+                color: #6b7280;
+                font-size: 15px;
+                padding: 40px 24px;
+                background: #f9fafb;
+                border-radius: 4px;
+                border: 1px dashed #d1d5db;
             }
             
             @media (max-width: 640px) {
                 .nexa-filter-row {
-                    grid-template-columns: 1fr;
+                    grid-template-columns: 1fr 1fr;
                 }
                 .nexa-filter-actions {
                     flex-direction: column;
                 }
                 .nexa-filter-btn {
                     width: 100%;
+                }
+            }
+            @media (max-width: 480px) {
+                .nexa-filter-row {
+                    grid-template-columns: 1fr;
                 }
             }
         </style>
