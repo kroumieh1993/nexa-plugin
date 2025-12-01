@@ -58,8 +58,27 @@ class Nexa_RE_Api_Client {
 
     /* -------- Properties endpoints -------- */
 
-    public function list_properties() {
-        return $this->request( 'GET', '/properties' );
+    public function list_properties( array $filters = [] ) {
+        $path = '/properties';
+        
+        // Build query string from filters
+        $query_params = array_filter( [
+            'city'      => isset( $filters['city'] ) ? sanitize_text_field( $filters['city'] ) : '',
+            'category'  => isset( $filters['category'] ) ? sanitize_text_field( $filters['category'] ) : '',
+            'type'      => isset( $filters['type'] ) ? sanitize_text_field( $filters['type'] ) : '',
+            'min_price' => isset( $filters['min_price'] ) && $filters['min_price'] !== '' ? (int) $filters['min_price'] : '',
+            'max_price' => isset( $filters['max_price'] ) && $filters['max_price'] !== '' ? (int) $filters['max_price'] : '',
+            'bedrooms'  => isset( $filters['bedrooms'] ) && $filters['bedrooms'] !== '' ? (int) $filters['bedrooms'] : '',
+            'bathrooms' => isset( $filters['bathrooms'] ) && $filters['bathrooms'] !== '' ? (int) $filters['bathrooms'] : '',
+        ], function( $value ) {
+            return $value !== '' && $value !== null;
+        } );
+        
+        if ( ! empty( $query_params ) ) {
+            $path .= '?' . http_build_query( $query_params );
+        }
+        
+        return $this->request( 'GET', $path );
     }
 
     public function get_property( $id ) {
