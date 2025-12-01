@@ -72,7 +72,7 @@ class Nexa_RE_Shortcodes {
             $filter_bathrooms = (string) absint( $_GET['nexa_bathrooms'] );
         }
 
-        // Build filters array for API client
+        // Build filters array for API client (keep only non-empty strings)
         $filters = array_filter( [
             'city'      => $filter_city,
             'category'  => $filter_category,
@@ -81,7 +81,9 @@ class Nexa_RE_Shortcodes {
             'max_price' => $filter_max,
             'bedrooms'  => $filter_bedrooms,
             'bathrooms' => $filter_bathrooms,
-        ] );
+        ], function( $value ) {
+            return $value !== '';
+        } );
 
         // Use centralized API client
         $api = new Nexa_RE_Api_Client();
