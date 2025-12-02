@@ -154,14 +154,38 @@
                                 </div>
                                 <div class="nexa-form-field">
                                     <label class="nexa-form-label" for="nexa-city">City</label>
-                                    <input class="nexa-input" type="text" id="nexa-city" name="city" required>
+                                    <?php if ( ! empty( $city_options ) ) : ?>
+                                        <select class="nexa-input" id="nexa-city" name="city" required>
+                                            <option value="">— Select City —</option>
+                                            <?php foreach ( $city_options as $city_opt ) : ?>
+                                                <option value="<?php echo esc_attr( $city_opt ); ?>"><?php echo esc_html( $city_opt ); ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    <?php else : ?>
+                                        <input class="nexa-input" type="text" id="nexa-city" name="city" required>
+                                        <p class="nexa-form-hint" style="font-size:11px; color:#6b7280; margin-top:4px;">
+                                            <a href="<?php echo esc_url( admin_url( 'admin.php?page=nexa-customization' ) ); ?>" target="_blank">Configure city options</a>
+                                        </p>
+                                    <?php endif; ?>
                                 </div>
                             </div>
 
                             <div class="nexa-form-row nexa-form-row-inline">
                                 <div class="nexa-form-field">
                                     <label class="nexa-form-label" for="nexa-property-type">Property Type</label>
-                                    <input class="nexa-input" type="text" id="nexa-property-type" name="property_type" placeholder="Apartment, Villa, Studio...">
+                                    <?php if ( ! empty( $property_type_options ) ) : ?>
+                                        <select class="nexa-input" id="nexa-property-type" name="property_type">
+                                            <option value="">— Select Property Type —</option>
+                                            <?php foreach ( $property_type_options as $type_opt ) : ?>
+                                                <option value="<?php echo esc_attr( $type_opt ); ?>"><?php echo esc_html( $type_opt ); ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    <?php else : ?>
+                                        <input class="nexa-input" type="text" id="nexa-property-type" name="property_type" placeholder="Apartment, Villa, Studio...">
+                                        <p class="nexa-form-hint" style="font-size:11px; color:#6b7280; margin-top:4px;">
+                                            <a href="<?php echo esc_url( admin_url( 'admin.php?page=nexa-customization' ) ); ?>" target="_blank">Configure property types</a>
+                                        </p>
+                                    <?php endif; ?>
                                 </div>
                                 <div class="nexa-form-field">
                                     <label class="nexa-form-label" for="nexa-area">Area (sqm)</label>

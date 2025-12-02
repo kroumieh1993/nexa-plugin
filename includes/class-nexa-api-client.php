@@ -110,7 +110,61 @@ class Nexa_RE_Api_Client {
         return $this->request( 'PUT', '/properties/' . (int) $id, $payload );
     }
 
-    // Later we can add:
-    // public function list_appointments() { ... }
-    // public function create_task() { ... }
+    /* -------- Agency Parameters endpoints -------- */
+
+    /**
+     * List all agency parameters (cities and property types).
+     *
+     * @param string|null $type Optional filter by type ('city' or 'property_type').
+     * @return array API response.
+     */
+    public function list_agency_parameters( $type = null ) {
+        $path = '/agency-parameters';
+        if ( $type ) {
+            $path .= '?type=' . rawurlencode( $type );
+        }
+        return $this->request( 'GET', $path );
+    }
+
+    /**
+     * Create a new agency parameter.
+     *
+     * @param array $payload { parameter_type, value, sort_order }.
+     * @return array API response.
+     */
+    public function create_agency_parameter( array $payload ) {
+        return $this->request( 'POST', '/agency-parameters', $payload );
+    }
+
+    /**
+     * Update an existing agency parameter.
+     *
+     * @param int   $id      Parameter ID.
+     * @param array $payload { value, sort_order }.
+     * @return array API response.
+     */
+    public function update_agency_parameter( $id, array $payload ) {
+        return $this->request( 'PUT', '/agency-parameters/' . (int) $id, $payload );
+    }
+
+    /**
+     * Delete an agency parameter.
+     *
+     * @param int $id Parameter ID.
+     * @return array API response.
+     */
+    public function delete_agency_parameter( $id ) {
+        return $this->request( 'DELETE', '/agency-parameters/' . (int) $id );
+    }
+
+    /**
+     * Bulk replace all values for a parameter type.
+     *
+     * @param string $type   Parameter type ('city' or 'property_type').
+     * @param array  $values Array of string values.
+     * @return array API response.
+     */
+    public function bulk_update_agency_parameters( $type, array $values ) {
+        return $this->request( 'PUT', '/agency-parameters/bulk/' . rawurlencode( $type ), [ 'values' => $values ] );
+    }
 }
