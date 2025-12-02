@@ -75,6 +75,7 @@ Displays a full agency dashboard with property management capabilities.
 
 ## Documentation
 
+- [Shortcodes Guide](docs/SHORTCODES.md) - Complete documentation for all shortcodes including attributes and examples
 - [Map Integration Guide](docs/MAP_INTEGRATION.md) - How to configure and use map features
 
 ## Requirements
