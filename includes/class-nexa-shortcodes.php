@@ -9,6 +9,7 @@ class Nexa_RE_Shortcodes {
     public static function register_shortcodes() {
         add_shortcode( 'nexa_properties', [ __CLASS__, 'render_properties' ] );
         add_shortcode( 'nexa_agency_dashboard', [ __CLASS__, 'render_agency_dashboard' ] );
+        add_shortcode( 'nexa_property_search', [ __CLASS__, 'render_property_search' ] );
     }
 
     protected static function get_property_url( array $property ) {
@@ -18,6 +19,245 @@ class Nexa_RE_Shortcodes {
         }
 
         return home_url( '/properties/' . $id . '/' );
+    }
+
+    /**
+     * Render the property search bar shortcode.
+     *
+     * This creates a search bar that can be placed on any page (e.g., homepage)
+     * to allow users to quickly filter properties and be redirected to the
+     * properties listing page with the selected filters applied.
+     *
+     * @param array $atts Shortcode attributes.
+     * @return string HTML output.
+     */
+    public static function render_property_search( $atts = [] ) {
+        $atts = shortcode_atts( [
+            'properties_page' => '',
+            'show_city'       => 'true',
+            'show_category'   => 'true',
+            'show_type'       => 'true',
+            'show_price'      => 'true',
+            'show_bedrooms'   => 'true',
+            'show_bathrooms'  => 'true',
+        ], $atts, 'nexa_property_search' );
+
+        // Determine the properties page URL
+        $properties_url = $atts['properties_page'];
+        if ( empty( $properties_url ) ) {
+            // Default to home URL if not specified
+            $properties_url = home_url( '/' );
+        }
+
+        // Convert show_* attributes to boolean
+        $show_city      = filter_var( $atts['show_city'], FILTER_VALIDATE_BOOLEAN );
+        $show_category  = filter_var( $atts['show_category'], FILTER_VALIDATE_BOOLEAN );
+        $show_type      = filter_var( $atts['show_type'], FILTER_VALIDATE_BOOLEAN );
+        $show_price     = filter_var( $atts['show_price'], FILTER_VALIDATE_BOOLEAN );
+        $show_bedrooms  = filter_var( $atts['show_bedrooms'], FILTER_VALIDATE_BOOLEAN );
+        $show_bathrooms = filter_var( $atts['show_bathrooms'], FILTER_VALIDATE_BOOLEAN );
+
+        ob_start();
+        ?>
+        <div class="nexa-property-search-bar">
+            <form method="get" action="<?php echo esc_url( $properties_url ); ?>" class="nexa-search-form">
+                <div class="nexa-search-fields">
+                    <?php if ( $show_city ) : ?>
+                    <div class="nexa-search-field">
+                        <label for="nexa-search-city">City</label>
+                        <input type="text" id="nexa-search-city" name="nexa_city" placeholder="Enter city">
+                    </div>
+                    <?php endif; ?>
+
+                    <?php if ( $show_category ) : ?>
+                    <div class="nexa-search-field">
+                        <label for="nexa-search-category">Category</label>
+                        <select id="nexa-search-category" name="nexa_category">
+                            <option value="">All</option>
+                            <option value="rent">Rent</option>
+                            <option value="buy">Buy</option>
+                        </select>
+                    </div>
+                    <?php endif; ?>
+
+                    <?php if ( $show_type ) : ?>
+                    <div class="nexa-search-field">
+                        <label for="nexa-search-type">Property Type</label>
+                        <input type="text" id="nexa-search-type" name="nexa_type" placeholder="e.g. Apartment">
+                    </div>
+                    <?php endif; ?>
+
+                    <?php if ( $show_price ) : ?>
+                    <div class="nexa-search-field nexa-search-field-price">
+                        <label for="nexa-search-min-price">Price Range</label>
+                        <div class="nexa-price-inputs">
+                            <input type="number" id="nexa-search-min-price" name="nexa_min_price" placeholder="Min" min="0">
+                            <span class="nexa-price-separator">-</span>
+                            <input type="number" id="nexa-search-max-price" name="nexa_max_price" placeholder="Max" min="0">
+                        </div>
+                    </div>
+                    <?php endif; ?>
+
+                    <?php if ( $show_bedrooms ) : ?>
+                    <div class="nexa-search-field">
+                        <label for="nexa-search-bedrooms">Bedrooms</label>
+                        <select id="nexa-search-bedrooms" name="nexa_bedrooms">
+                            <option value="">Any</option>
+                            <option value="1">1+</option>
+                            <option value="2">2+</option>
+                            <option value="3">3+</option>
+                            <option value="4">4+</option>
+                            <option value="5">5+</option>
+                        </select>
+                    </div>
+                    <?php endif; ?>
+
+                    <?php if ( $show_bathrooms ) : ?>
+                    <div class="nexa-search-field">
+                        <label for="nexa-search-bathrooms">Bathrooms</label>
+                        <select id="nexa-search-bathrooms" name="nexa_bathrooms">
+                            <option value="">Any</option>
+                            <option value="1">1+</option>
+                            <option value="2">2+</option>
+                            <option value="3">3+</option>
+                            <option value="4">4+</option>
+                        </select>
+                    </div>
+                    <?php endif; ?>
+                </div>
+                <div class="nexa-search-action">
+                    <button type="submit" class="nexa-search-btn">
+                        <span class="nexa-search-btn-icon">🔍</span>
+                        Search Properties
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <style>
+            .nexa-property-search-bar {
+                background: #ffffff;
+                border-radius: 12px;
+                padding: 24px;
+                box-shadow: 0 4px 20px rgba(15, 23, 42, 0.1);
+                max-width: 1200px;
+                margin: 0 auto;
+            }
+            .nexa-search-form {
+                display: flex;
+                flex-direction: column;
+                gap: 20px;
+            }
+            .nexa-search-fields {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+                gap: 16px;
+                align-items: end;
+            }
+            .nexa-search-field {
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+            }
+            .nexa-search-field label {
+                font-size: 12px;
+                font-weight: 600;
+                color: #64748b;
+                text-transform: uppercase;
+                letter-spacing: 0.025em;
+            }
+            .nexa-search-field input,
+            .nexa-search-field select {
+                padding: 12px 14px;
+                border: 1px solid #e2e8f0;
+                border-radius: 8px;
+                font-size: 14px;
+                color: #1e293b;
+                background: #f8fafc;
+                transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+                height: 46px;
+            }
+            .nexa-search-field input:focus,
+            .nexa-search-field select:focus {
+                outline: none;
+                border-color: #4f46e5;
+                background: #ffffff;
+                box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+            }
+            .nexa-search-field input::placeholder {
+                color: #94a3b8;
+            }
+            .nexa-search-field-price {
+                min-width: 220px;
+            }
+            .nexa-price-inputs {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            .nexa-price-inputs input {
+                flex: 1;
+                min-width: 0;
+            }
+            .nexa-price-separator {
+                color: #94a3b8;
+                font-weight: 500;
+            }
+            .nexa-search-action {
+                display: flex;
+                justify-content: center;
+            }
+            .nexa-search-btn {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 10px;
+                padding: 14px 32px;
+                background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+                border: none;
+                border-radius: 10px;
+                font-size: 16px;
+                font-weight: 600;
+                color: #ffffff;
+                cursor: pointer;
+                transition: transform 0.15s ease, box-shadow 0.15s ease;
+                min-width: 200px;
+            }
+            .nexa-search-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 25px rgba(79, 70, 229, 0.35);
+            }
+            .nexa-search-btn:active {
+                transform: translateY(0);
+            }
+            .nexa-search-btn-icon {
+                font-size: 18px;
+            }
+            @media (max-width: 768px) {
+                .nexa-property-search-bar {
+                    padding: 20px 16px;
+                }
+                .nexa-search-fields {
+                    grid-template-columns: 1fr 1fr;
+                }
+                .nexa-search-field-price {
+                    grid-column: span 2;
+                }
+            }
+            @media (max-width: 480px) {
+                .nexa-search-fields {
+                    grid-template-columns: 1fr;
+                }
+                .nexa-search-field-price {
+                    grid-column: span 1;
+                }
+                .nexa-search-btn {
+                    width: 100%;
+                }
+            }
+        </style>
+        <?php
+        return ob_get_clean();
     }
 
     public static function render_properties( $atts = [] ) {
