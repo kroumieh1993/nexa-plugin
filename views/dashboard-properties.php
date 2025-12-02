@@ -164,7 +164,7 @@
                                     <?php else : ?>
                                         <input class="nexa-input" type="text" id="nexa-city" name="city" required>
                                         <p class="nexa-form-hint" style="font-size:11px; color:#6b7280; margin-top:4px;">
-                                            <a href="<?php echo esc_url( admin_url( 'admin.php?page=nexa-customization' ) ); ?>" target="_blank">Configure city options</a>
+                                            <a href="<?php echo esc_url( admin_url( 'admin.php?page=nexa-customization' ) ); ?>">Configure city options</a>
                                         </p>
                                     <?php endif; ?>
                                 </div>
@@ -183,7 +183,7 @@
                                     <?php else : ?>
                                         <input class="nexa-input" type="text" id="nexa-property-type" name="property_type" placeholder="Apartment, Villa, Studio...">
                                         <p class="nexa-form-hint" style="font-size:11px; color:#6b7280; margin-top:4px;">
-                                            <a href="<?php echo esc_url( admin_url( 'admin.php?page=nexa-customization' ) ); ?>" target="_blank">Configure property types</a>
+                                            <a href="<?php echo esc_url( admin_url( 'admin.php?page=nexa-customization' ) ); ?>">Configure property types</a>
                                         </p>
                                     <?php endif; ?>
                                 </div>
