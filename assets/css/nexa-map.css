@@ -134,6 +134,25 @@
 }
 
 .nexa-popup-content {
+    padding: 0;
+    min-width: 200px;
+}
+
+.nexa-popup-image {
+    width: 100%;
+    height: 120px;
+    overflow: hidden;
+    background: linear-gradient(145deg, #e2e8f0, #f8fafc);
+}
+
+.nexa-popup-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.nexa-popup-details {
     padding: 12px;
 }
 

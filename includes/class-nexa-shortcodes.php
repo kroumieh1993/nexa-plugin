@@ -297,11 +297,16 @@ class Nexa_RE_Shortcodes {
                     if (!mapEl) return;
 
                     var propertiesData = <?php echo wp_json_encode( array_map( function( $p ) {
+                        $first_image = '';
+                        if ( ! empty( $p['images'] ) && is_array( $p['images'] ) ) {
+                            $first_image = $p['images'][0]['url'] ?? '';
+                        }
                         return [
                             'id'        => intval( $p['id'] ?? 0 ),
                             'title'     => esc_html( $p['title'] ?? '' ),
                             'city'      => esc_html( $p['city'] ?? '' ),
                             'price'     => isset( $p['price'] ) ? esc_html( number_format_i18n( $p['price'] ) ) : '',
+                            'image'     => esc_url( $first_image ),
                             'latitude'  => $p['latitude'] ?? null,
                             'longitude' => $p['longitude'] ?? null,
                             'url'       => esc_url( self::get_property_url( $p ) ),
@@ -343,15 +348,18 @@ class Nexa_RE_Shortcodes {
 
                         bounds.push([lat, lng]);
 
+                        var imageHtml = prop.image ? '<div class="nexa-popup-image"><img src="' + prop.image + '" alt="' + prop.title + '"></div>' : '';
                         var popupContent = '<div class="nexa-popup-content">' +
+                            imageHtml +
+                            '<div class="nexa-popup-details">' +
                             '<p class="nexa-popup-title">' + prop.title + '</p>' +
                             (prop.city ? '<p class="nexa-popup-address">📍 ' + prop.city + '</p>' : '') +
                             (prop.price ? '<p class="nexa-popup-price">' + prop.price + '</p>' : '') +
                             '<a href="' + prop.url + '" class="nexa-popup-link">View Details →</a>' +
-                            '</div>';
+                            '</div></div>';
 
                         var marker = L.marker([lat, lng])
-                            .bindPopup(popupContent);
+                            .bindPopup(popupContent, { minWidth: 200 });
                         
                         markerMap[prop.id] = marker;
                         markers.addLayer(marker);
