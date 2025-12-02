@@ -57,6 +57,22 @@ class Nexa_RE_Shortcodes {
         $show_bedrooms  = filter_var( $atts['show_bedrooms'], FILTER_VALIDATE_BOOLEAN );
         $show_bathrooms = filter_var( $atts['show_bathrooms'], FILTER_VALIDATE_BOOLEAN );
 
+        // Fetch agency parameters for dropdowns
+        $city_options          = [];
+        $property_type_options = [];
+        $api                   = new Nexa_RE_Api_Client();
+        $params_result         = $api->list_agency_parameters();
+
+        if ( $params_result['ok'] && ! empty( $params_result['data']['parameters'] ) ) {
+            $parameters = $params_result['data']['parameters'];
+            if ( ! empty( $parameters['city'] ) && is_array( $parameters['city'] ) ) {
+                $city_options = array_column( $parameters['city'], 'value' );
+            }
+            if ( ! empty( $parameters['property_type'] ) && is_array( $parameters['property_type'] ) ) {
+                $property_type_options = array_column( $parameters['property_type'], 'value' );
+            }
+        }
+
         ob_start();
         ?>
         <div class="nexa-property-search-bar">
@@ -65,7 +81,16 @@ class Nexa_RE_Shortcodes {
                     <?php if ( $show_city ) : ?>
                     <div class="nexa-search-field">
                         <label for="nexa-search-city">City</label>
+                        <?php if ( ! empty( $city_options ) ) : ?>
+                        <select id="nexa-search-city" name="nexa_city">
+                            <option value="">All Cities</option>
+                            <?php foreach ( $city_options as $city_opt ) : ?>
+                                <option value="<?php echo esc_attr( $city_opt ); ?>"><?php echo esc_html( $city_opt ); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <?php else : ?>
                         <input type="text" id="nexa-search-city" name="nexa_city" placeholder="Enter city">
+                        <?php endif; ?>
                     </div>
                     <?php endif; ?>
 
@@ -83,7 +108,16 @@ class Nexa_RE_Shortcodes {
                     <?php if ( $show_type ) : ?>
                     <div class="nexa-search-field">
                         <label for="nexa-search-type">Property Type</label>
+                        <?php if ( ! empty( $property_type_options ) ) : ?>
+                        <select id="nexa-search-type" name="nexa_type">
+                            <option value="">All Types</option>
+                            <?php foreach ( $property_type_options as $type_opt ) : ?>
+                                <option value="<?php echo esc_attr( $type_opt ); ?>"><?php echo esc_html( $type_opt ); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <?php else : ?>
                         <input type="text" id="nexa-search-type" name="nexa_type" placeholder="e.g. Apartment">
+                        <?php endif; ?>
                     </div>
                     <?php endif; ?>
 
@@ -346,6 +380,21 @@ class Nexa_RE_Shortcodes {
         $show_filter = filter_var( $atts['show_filter'], FILTER_VALIDATE_BOOLEAN );
         $show_map    = filter_var( $atts['show_map'], FILTER_VALIDATE_BOOLEAN );
 
+        // Fetch agency parameters for filter dropdowns
+        $city_options          = [];
+        $property_type_options = [];
+        $params_result         = $api->list_agency_parameters();
+
+        if ( $params_result['ok'] && ! empty( $params_result['data']['parameters'] ) ) {
+            $parameters = $params_result['data']['parameters'];
+            if ( ! empty( $parameters['city'] ) && is_array( $parameters['city'] ) ) {
+                $city_options = array_column( $parameters['city'], 'value' );
+            }
+            if ( ! empty( $parameters['property_type'] ) && is_array( $parameters['property_type'] ) ) {
+                $property_type_options = array_column( $parameters['property_type'], 'value' );
+            }
+        }
+
         // Check if any properties have location data for the map
         $properties_with_location = [];
         if ( $show_map && is_array( $properties ) ) {
@@ -378,7 +427,16 @@ class Nexa_RE_Shortcodes {
                     <div class="nexa-filter-row">
                         <div class="nexa-filter-field">
                             <label for="nexa-filter-city">City</label>
+                            <?php if ( ! empty( $city_options ) ) : ?>
+                            <select id="nexa-filter-city" name="nexa_city">
+                                <option value="">All Cities</option>
+                                <?php foreach ( $city_options as $city_opt ) : ?>
+                                    <option value="<?php echo esc_attr( $city_opt ); ?>" <?php selected( $filter_city, $city_opt ); ?>><?php echo esc_html( $city_opt ); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                            <?php else : ?>
                             <input type="text" id="nexa-filter-city" name="nexa_city" value="<?php echo esc_attr( $filter_city ); ?>" placeholder="Any city">
+                            <?php endif; ?>
                         </div>
                         <div class="nexa-filter-field">
                             <label for="nexa-filter-category">Category</label>
@@ -390,7 +448,16 @@ class Nexa_RE_Shortcodes {
                         </div>
                         <div class="nexa-filter-field">
                             <label for="nexa-filter-type">Property Type</label>
+                            <?php if ( ! empty( $property_type_options ) ) : ?>
+                            <select id="nexa-filter-type" name="nexa_type">
+                                <option value="">All Types</option>
+                                <?php foreach ( $property_type_options as $type_opt ) : ?>
+                                    <option value="<?php echo esc_attr( $type_opt ); ?>" <?php selected( $filter_type, $type_opt ); ?>><?php echo esc_html( $type_opt ); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                            <?php else : ?>
                             <input type="text" id="nexa-filter-type" name="nexa_type" value="<?php echo esc_attr( $filter_type ); ?>" placeholder="e.g. Apartment">
+                            <?php endif; ?>
                         </div>
                     </div>
                     <div class="nexa-filter-row">
