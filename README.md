@@ -6,6 +6,7 @@ A WordPress plugin that connects your site to the Nexa real estate SaaS and disp
 
 - **Property Management**: Create, edit, and delete properties through the admin interface or frontend dashboard
 - **Property Display**: Show properties using the `[nexa_properties]` shortcode
+- **Property Search Bar**: Quick search bar shortcode for homepages that redirects to filtered property listings
 - **Single Property Pages**: Dedicated pages for each property with image gallery, details, and floor plans
 - **Interactive Maps**: Display property locations on maps using Leaflet (OpenStreetMap) or Google Maps
 - **Location Picker**: Pin property locations on a map when creating/editing properties
@@ -44,6 +45,27 @@ See [docs/MAP_INTEGRATION.md](docs/MAP_INTEGRATION.md) for detailed configuratio
 - `per_page` - Number of properties per page
 - `show_filter` - Show/hide filter form (true/false)
 - `show_map` - Show/hide map view (true/false)
+
+### Property Search Bar
+```
+[nexa_property_search]
+```
+
+A quick search bar that can be placed on any page (e.g., homepage) to allow users to filter properties and be redirected to the properties listing page with the selected filters applied.
+
+**Attributes:**
+- `properties_page` - URL of the page containing the `[nexa_properties]` shortcode (required for proper redirection)
+- `show_city` - Show/hide city field (true/false, default: true)
+- `show_category` - Show/hide category field (true/false, default: true)
+- `show_type` - Show/hide property type field (true/false, default: true)
+- `show_price` - Show/hide price range fields (true/false, default: true)
+- `show_bedrooms` - Show/hide bedrooms field (true/false, default: true)
+- `show_bathrooms` - Show/hide bathrooms field (true/false, default: true)
+
+**Example:**
+```
+[nexa_property_search properties_page="/properties/"]
+```
 
 ### Agency Dashboard
 ```
