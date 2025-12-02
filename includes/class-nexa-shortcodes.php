@@ -298,15 +298,15 @@ class Nexa_RE_Shortcodes {
 
                     var propertiesData = <?php echo wp_json_encode( array_map( function( $p ) {
                         return [
-                            'id'        => $p['id'] ?? 0,
-                            'title'     => $p['title'] ?? '',
-                            'city'      => $p['city'] ?? '',
-                            'price'     => isset( $p['price'] ) ? number_format_i18n( $p['price'] ) : '',
+                            'id'        => intval( $p['id'] ?? 0 ),
+                            'title'     => esc_html( $p['title'] ?? '' ),
+                            'city'      => esc_html( $p['city'] ?? '' ),
+                            'price'     => isset( $p['price'] ) ? esc_html( number_format_i18n( $p['price'] ) ) : '',
                             'latitude'  => $p['latitude'] ?? null,
                             'longitude' => $p['longitude'] ?? null,
-                            'url'       => self::get_property_url( $p ),
+                            'url'       => esc_url( self::get_property_url( $p ) ),
                         ];
-                    }, $properties_with_location ) ); ?>;
+                    }, $properties_with_location ), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP ); ?>;
 
                     var map = L.map('nexa-properties-list-map');
 

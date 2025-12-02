@@ -68,7 +68,18 @@ function nexa_re_enqueue_frontend_assets() {
 add_action( 'wp_enqueue_scripts', 'nexa_re_enqueue_frontend_assets' );
 
 /**
- * Enqueue Leaflet map assets for pages that need maps.
+ * Enqueue Leaflet or Google Maps assets for pages that need maps.
+ * 
+ * This function should be called on pages that display property maps:
+ * - Single property pages with location data
+ * - Properties list pages with map view enabled
+ * - Admin property forms with location picker
+ * 
+ * The function checks the configured map provider (Leaflet or Google Maps)
+ * and enqueues the appropriate CSS and JavaScript files.
+ *
+ * @since 0.1.0
+ * @return void
  */
 function nexa_re_enqueue_map_assets() {
     $map_provider = Nexa_RE_Settings::get_map_provider();
