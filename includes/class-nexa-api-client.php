@@ -48,9 +48,27 @@ class Nexa_RE_Api_Client {
         $code = wp_remote_retrieve_response_code( $response );
         $data = json_decode( wp_remote_retrieve_body( $response ), true );
 
+        // Extract error message, including validation errors for 422 responses
+        $error_message = '';
+        if ( $code >= 400 && is_array( $data ) ) {
+            $error_message = $data['message'] ?? '';
+            // For Laravel validation errors (422), append field-specific errors
+            if ( ! empty( $data['errors'] ) && is_array( $data['errors'] ) ) {
+                $validation_errors = [];
+                foreach ( $data['errors'] as $field => $messages ) {
+                    if ( is_array( $messages ) ) {
+                        $validation_errors[] = implode( ', ', $messages );
+                    }
+                }
+                if ( ! empty( $validation_errors ) ) {
+                    $error_message .= ' ' . implode( ' ', $validation_errors );
+                }
+            }
+        }
+
         return [
             'ok'    => $code >= 200 && $code < 300,
-            'error' => $code >= 400 ? ( is_array( $data ) ? ( $data['message'] ?? '' ) : '' ) : '',
+            'error' => trim( $error_message ),
             'code'  => $code,
             'data'  => $data,
         ];
