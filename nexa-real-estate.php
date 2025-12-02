@@ -67,6 +67,74 @@ function nexa_re_enqueue_frontend_assets() {
 }
 add_action( 'wp_enqueue_scripts', 'nexa_re_enqueue_frontend_assets' );
 
+/**
+ * Enqueue Leaflet map assets for pages that need maps.
+ */
+function nexa_re_enqueue_map_assets() {
+    $map_provider = Nexa_RE_Settings::get_map_provider();
+
+    if ( 'leaflet' === $map_provider ) {
+        // Enqueue Leaflet CSS
+        wp_enqueue_style(
+            'leaflet',
+            'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
+            [],
+            '1.9.4'
+        );
+
+        // Enqueue Leaflet JS
+        wp_enqueue_script(
+            'leaflet',
+            'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
+            [],
+            '1.9.4',
+            true
+        );
+
+        // Enqueue MarkerCluster CSS
+        wp_enqueue_style(
+            'leaflet-markercluster',
+            'https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css',
+            [ 'leaflet' ],
+            '1.5.3'
+        );
+        wp_enqueue_style(
+            'leaflet-markercluster-default',
+            'https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css',
+            [ 'leaflet-markercluster' ],
+            '1.5.3'
+        );
+
+        // Enqueue MarkerCluster JS
+        wp_enqueue_script(
+            'leaflet-markercluster',
+            'https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js',
+            [ 'leaflet' ],
+            '1.5.3',
+            true
+        );
+    } elseif ( 'google' === $map_provider ) {
+        $api_key = Nexa_RE_Settings::get_google_maps_key();
+        if ( ! empty( $api_key ) ) {
+            wp_enqueue_script(
+                'google-maps',
+                'https://maps.googleapis.com/maps/api/js?key=' . esc_attr( $api_key ) . '&libraries=marker',
+                [],
+                null,
+                true
+            );
+        }
+    }
+
+    // Enqueue our custom map CSS
+    wp_enqueue_style(
+        'nexa-re-map',
+        NEXA_RE_PLUGIN_URL . 'assets/css/nexa-map.css',
+        [],
+        NEXA_RE_VERSION
+    );
+}
+
 
 
 require_once NEXA_RE_PLUGIN_DIR . 'includes/class-nexa-settings.php';
