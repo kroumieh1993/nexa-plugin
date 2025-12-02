@@ -108,7 +108,14 @@ class Nexa_RE_Shortcodes {
         ?>
         <div class="nexa-properties-wrapper">
             <?php if ( $show_filter ) : ?>
-            <div class="nexa-properties-filter">
+            <div class="nexa-filter-header">
+                <button type="button" class="nexa-advanced-search-btn" id="nexa-toggle-filter">
+                    <span class="nexa-search-icon">🔍</span>
+                    Advanced Search
+                    <span class="nexa-arrow-icon" id="nexa-arrow-icon">▼</span>
+                </button>
+            </div>
+            <div class="nexa-properties-filter" id="nexa-filter-panel" style="display: none;">
                 <form method="get" class="nexa-filter-form">
                     <div class="nexa-filter-row">
                         <div class="nexa-filter-field">
@@ -176,6 +183,27 @@ class Nexa_RE_Shortcodes {
                     </div>
                 </form>
             </div>
+            <script>
+            (function() {
+                var toggleBtn = document.getElementById('nexa-toggle-filter');
+                var filterPanel = document.getElementById('nexa-filter-panel');
+                var arrowIcon = document.getElementById('nexa-arrow-icon');
+                
+                if (toggleBtn && filterPanel) {
+                    toggleBtn.addEventListener('click', function() {
+                        if (filterPanel.style.display === 'none') {
+                            filterPanel.style.display = 'block';
+                            arrowIcon.textContent = '▲';
+                            toggleBtn.classList.add('nexa-filter-open');
+                        } else {
+                            filterPanel.style.display = 'none';
+                            arrowIcon.textContent = '▼';
+                            toggleBtn.classList.remove('nexa-filter-open');
+                        }
+                    });
+                }
+            })();
+            </script>
             <?php endif; ?>
             
             <?php if ( empty( $properties ) || ! is_array( $properties ) ) : ?>
@@ -362,6 +390,43 @@ class Nexa_RE_Shortcodes {
                 }
             }
             
+            /* Filter Header and Toggle Button */
+            .nexa-filter-header {
+                display: flex;
+                justify-content: flex-end;
+                margin-bottom: 16px;
+            }
+            .nexa-advanced-search-btn {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                padding: 10px 18px;
+                background: #ffffff;
+                border: 1px solid #d1d5db;
+                border-radius: 4px;
+                font-size: 14px;
+                font-weight: 500;
+                color: #374151;
+                cursor: pointer;
+                transition: all 0.15s ease;
+            }
+            .nexa-advanced-search-btn:hover {
+                background: #f9fafb;
+                border-color: #9ca3af;
+            }
+            .nexa-advanced-search-btn.nexa-filter-open {
+                background: #4f46e5;
+                border-color: #4f46e5;
+                color: #ffffff;
+            }
+            .nexa-search-icon {
+                font-size: 14px;
+            }
+            .nexa-arrow-icon {
+                font-size: 10px;
+                transition: transform 0.2s ease;
+            }
+            
             /* Filter Form Styles */
             .nexa-properties-filter {
                 background: #ffffff;
@@ -369,7 +434,7 @@ class Nexa_RE_Shortcodes {
                 padding: 20px 24px;
                 margin-bottom: 28px;
                 box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-                border: 1px solid #e5e7eb;
+                border: 1px solid #d1d5db;
             }
             .nexa-filter-form {
                 display: flex;
@@ -418,9 +483,9 @@ class Nexa_RE_Shortcodes {
                 display: flex;
                 gap: 10px;
                 flex-wrap: wrap;
-                padding-top: 4px;
-                border-top: 1px solid #f3f4f6;
-                margin-top: 4px;
+                padding-top: 16px;
+                border-top: 1px solid #d1d5db;
+                margin-top: 8px;
             }
             .nexa-filter-btn {
                 display: inline-flex;
