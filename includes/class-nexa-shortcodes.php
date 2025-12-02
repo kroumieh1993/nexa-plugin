@@ -444,7 +444,7 @@ class Nexa_RE_Shortcodes {
 
         <style>
             .nexa-properties-wrapper {
-                max-width: 1400px;
+                max-width: 1800px;
                 margin: 0 auto;
             }
             .nexa-properties-wrapper.nexa-has-map {
