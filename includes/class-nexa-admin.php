@@ -39,18 +39,35 @@ class Nexa_RE_Admin {
             'nexa-properties-add',
             [ __CLASS__, 'render_property_form_page' ]
         );
+
+        add_submenu_page(
+            'nexa-properties',
+            'Agency Customization',
+            'Customization',
+            'manage_options',
+            'nexa-customization',
+            [ __CLASS__, 'render_customization_page' ]
+        );
     }
 
     public static function enqueue_assets( $hook ) {
         // Only load on our pages
-        if ( strpos( $hook, 'nexa-properties' ) === false ) {
+        if ( strpos( $hook, 'nexa-properties' ) === false && strpos( $hook, 'nexa-customization' ) === false ) {
             return;
         }
 
         // Media for image uploads
         wp_enqueue_media();
 
-        // You can add a small custom admin CSS here if needed
+        // Enqueue admin CSS for customization page
+        if ( strpos( $hook, 'nexa-customization' ) !== false ) {
+            wp_enqueue_style(
+                'nexa-admin-customization',
+                NEXA_RE_PLUGIN_URL . 'assets/css/nexa-admin-customization.css',
+                [],
+                NEXA_RE_VERSION
+            );
+        }
     }
 
     public static function render_dashboard_page() {
@@ -362,6 +379,22 @@ class Nexa_RE_Admin {
             $floor_plans = $property['floor_plans'];
         }
 
+        // Fetch agency parameters for dropdowns
+        $api_client        = new Nexa_RE_Api_Client();
+        $params_result     = $api_client->list_agency_parameters();
+        $city_options      = [];
+        $property_type_options = [];
+
+        if ( $params_result['ok'] && ! empty( $params_result['data']['parameters'] ) ) {
+            $parameters = $params_result['data']['parameters'];
+            if ( ! empty( $parameters['city'] ) && is_array( $parameters['city'] ) ) {
+                $city_options = array_column( $parameters['city'], 'value' );
+            }
+            if ( ! empty( $parameters['property_type'] ) && is_array( $parameters['property_type'] ) ) {
+                $property_type_options = array_column( $parameters['property_type'], 'value' );
+            }
+        }
+
         // Enqueue map assets for admin
         nexa_re_enqueue_map_assets();
 
@@ -407,14 +440,38 @@ class Nexa_RE_Admin {
                                 <tr>
                                     <th scope="row"><label for="city">City</label></th>
                                     <td>
-                                        <input name="city" type="text" id="city" value="<?php echo esc_attr( $city ); ?>" class="regular-text" required>
+                                        <?php if ( ! empty( $city_options ) ) : ?>
+                                            <select name="city" id="city" required>
+                                                <option value="">— Select City —</option>
+                                                <?php foreach ( $city_options as $city_option ) : ?>
+                                                    <option value="<?php echo esc_attr( $city_option ); ?>" <?php selected( $city, $city_option ); ?>><?php echo esc_html( $city_option ); ?></option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        <?php else : ?>
+                                            <input name="city" type="text" id="city" value="<?php echo esc_attr( $city ); ?>" class="regular-text" required>
+                                            <p class="description">
+                                                <a href="<?php echo esc_url( admin_url( 'admin.php?page=nexa-customization' ) ); ?>">Configure city options</a> for a dropdown list.
+                                            </p>
+                                        <?php endif; ?>
                                     </td>
                                 </tr>
 
                                 <tr>
                                     <th scope="row"><label for="property_type">Property Type</label></th>
                                     <td>
-                                        <input name="property_type" type="text" id="property_type" value="<?php echo esc_attr( $property_type ); ?>" class="regular-text">
+                                        <?php if ( ! empty( $property_type_options ) ) : ?>
+                                            <select name="property_type" id="property_type">
+                                                <option value="">— Select Property Type —</option>
+                                                <?php foreach ( $property_type_options as $type_option ) : ?>
+                                                    <option value="<?php echo esc_attr( $type_option ); ?>" <?php selected( $property_type, $type_option ); ?>><?php echo esc_html( $type_option ); ?></option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        <?php else : ?>
+                                            <input name="property_type" type="text" id="property_type" value="<?php echo esc_attr( $property_type ); ?>" class="regular-text">
+                                            <p class="description">
+                                                <a href="<?php echo esc_url( admin_url( 'admin.php?page=nexa-customization' ) ); ?>">Configure property type options</a> for a dropdown list.
+                                            </p>
+                                        <?php endif; ?>
                                     </td>
                                 </tr>
 
@@ -680,6 +737,216 @@ class Nexa_RE_Admin {
                     }, 100);
                 }
             })(jQuery);
+        </script>
+        <?php
+    }
+
+    /**
+     * Render the Agency Customization page for managing Cities and Property Types.
+     */
+    public static function render_customization_page() {
+        $api_url   = rtrim( Nexa_RE_Settings::API_BASE_URL, '/' );
+        $api_token = trim( get_option( Nexa_RE_Settings::OPTION_API_TOKEN, '' ) );
+
+        if ( empty( $api_token ) ) {
+            echo '<div class="notice notice-error"><p>Please set your API token in <a href="' . esc_url( admin_url( 'options-general.php?page=nexa-real-estate' ) ) . '">Nexa Real Estate settings</a>.</p></div>';
+            return;
+        }
+
+        // Handle form submissions
+        $messages = [];
+
+        // Handle bulk save for cities
+        if ( isset( $_POST['nexa_save_cities'] ) && check_admin_referer( 'nexa_save_customization' ) ) {
+            $cities = [];
+            if ( ! empty( $_POST['nexa_cities'] ) && is_array( $_POST['nexa_cities'] ) ) {
+                foreach ( $_POST['nexa_cities'] as $city ) {
+                    $city = sanitize_text_field( $city );
+                    if ( ! empty( $city ) ) {
+                        $cities[] = $city;
+                    }
+                }
+            }
+
+            $api    = new Nexa_RE_Api_Client();
+            $result = $api->bulk_update_agency_parameters( 'city', $cities );
+
+            if ( $result['ok'] ) {
+                $messages[] = [ 'type' => 'success', 'text' => 'Cities saved successfully.' ];
+            } else {
+                $messages[] = [ 'type' => 'error', 'text' => 'Error saving cities: ' . esc_html( $result['error'] ?: 'API error ' . $result['code'] ) ];
+            }
+        }
+
+        // Handle bulk save for property types
+        if ( isset( $_POST['nexa_save_property_types'] ) && check_admin_referer( 'nexa_save_customization' ) ) {
+            $property_types = [];
+            if ( ! empty( $_POST['nexa_property_types'] ) && is_array( $_POST['nexa_property_types'] ) ) {
+                foreach ( $_POST['nexa_property_types'] as $type ) {
+                    $type = sanitize_text_field( $type );
+                    if ( ! empty( $type ) ) {
+                        $property_types[] = $type;
+                    }
+                }
+            }
+
+            $api    = new Nexa_RE_Api_Client();
+            $result = $api->bulk_update_agency_parameters( 'property_type', $property_types );
+
+            if ( $result['ok'] ) {
+                $messages[] = [ 'type' => 'success', 'text' => 'Property types saved successfully.' ];
+            } else {
+                $messages[] = [ 'type' => 'error', 'text' => 'Error saving property types: ' . esc_html( $result['error'] ?: 'API error ' . $result['code'] ) ];
+            }
+        }
+
+        // Fetch current parameters
+        $api    = new Nexa_RE_Api_Client();
+        $result = $api->list_agency_parameters();
+
+        $cities         = [];
+        $property_types = [];
+
+        if ( $result['ok'] && ! empty( $result['data']['parameters'] ) ) {
+            $parameters = $result['data']['parameters'];
+            if ( ! empty( $parameters['city'] ) && is_array( $parameters['city'] ) ) {
+                $cities = array_column( $parameters['city'], 'value' );
+            }
+            if ( ! empty( $parameters['property_type'] ) && is_array( $parameters['property_type'] ) ) {
+                $property_types = array_column( $parameters['property_type'], 'value' );
+            }
+        }
+
+        ?>
+        <div class="wrap nexa-admin-wrap nexa-customization-wrap">
+            <h1>Agency Customization</h1>
+            <p class="nexa-customization-subtitle">Manage custom dropdown options for Cities and Property Types. These values will appear as options when adding or editing properties.</p>
+
+            <?php foreach ( $messages as $msg ) : ?>
+                <div class="notice notice-<?php echo esc_attr( $msg['type'] ); ?> is-dismissible">
+                    <p><?php echo esc_html( $msg['text'] ); ?></p>
+                </div>
+            <?php endforeach; ?>
+
+            <div class="nexa-customization-sections">
+                <!-- Cities Section -->
+                <div class="nexa-customization-section">
+                    <form method="post">
+                        <?php wp_nonce_field( 'nexa_save_customization' ); ?>
+                        <div class="nexa-section-header">
+                            <h2>Cities</h2>
+                            <p class="description">Add the cities where your agency operates. These will be available as dropdown options in the property form.</p>
+                        </div>
+
+                        <div class="nexa-values-list" id="nexa-cities-list">
+                            <?php if ( empty( $cities ) ) : ?>
+                                <p class="nexa-empty-message">No cities added yet. Click "Add City" to get started.</p>
+                            <?php else : ?>
+                                <?php foreach ( $cities as $index => $city ) : ?>
+                                    <div class="nexa-value-row">
+                                        <span class="nexa-drag-handle dashicons dashicons-menu"></span>
+                                        <input type="text" name="nexa_cities[]" value="<?php echo esc_attr( $city ); ?>" class="regular-text" placeholder="Enter city name">
+                                        <button type="button" class="button nexa-remove-value" title="Remove"><span class="dashicons dashicons-trash"></span></button>
+                                    </div>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </div>
+
+                        <div class="nexa-section-actions">
+                            <button type="button" class="button nexa-add-value" data-target="nexa-cities-list" data-name="nexa_cities[]" data-placeholder="Enter city name">
+                                <span class="dashicons dashicons-plus-alt2"></span> Add City
+                            </button>
+                            <button type="submit" name="nexa_save_cities" class="button button-primary">
+                                <span class="dashicons dashicons-saved"></span> Save Cities
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Property Types Section -->
+                <div class="nexa-customization-section">
+                    <form method="post">
+                        <?php wp_nonce_field( 'nexa_save_customization' ); ?>
+                        <div class="nexa-section-header">
+                            <h2>Property Types</h2>
+                            <p class="description">Define the types of properties your agency handles (e.g., Apartment, Villa, Studio, Office).</p>
+                        </div>
+
+                        <div class="nexa-values-list" id="nexa-property-types-list">
+                            <?php if ( empty( $property_types ) ) : ?>
+                                <p class="nexa-empty-message">No property types added yet. Click "Add Property Type" to get started.</p>
+                            <?php else : ?>
+                                <?php foreach ( $property_types as $index => $type ) : ?>
+                                    <div class="nexa-value-row">
+                                        <span class="nexa-drag-handle dashicons dashicons-menu"></span>
+                                        <input type="text" name="nexa_property_types[]" value="<?php echo esc_attr( $type ); ?>" class="regular-text" placeholder="Enter property type">
+                                        <button type="button" class="button nexa-remove-value" title="Remove"><span class="dashicons dashicons-trash"></span></button>
+                                    </div>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </div>
+
+                        <div class="nexa-section-actions">
+                            <button type="button" class="button nexa-add-value" data-target="nexa-property-types-list" data-name="nexa_property_types[]" data-placeholder="Enter property type">
+                                <span class="dashicons dashicons-plus-alt2"></span> Add Property Type
+                            </button>
+                            <button type="submit" name="nexa_save_property_types" class="button button-primary">
+                                <span class="dashicons dashicons-saved"></span> Save Property Types
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <script>
+        (function($){
+            $(function(){
+                // Add new value row
+                $('.nexa-add-value').on('click', function(e) {
+                    e.preventDefault();
+                    var $btn = $(this);
+                    var targetId = $btn.data('target');
+                    var inputName = $btn.data('name');
+                    var placeholder = $btn.data('placeholder');
+                    var $list = $('#' + targetId);
+
+                    // Remove empty message if present
+                    $list.find('.nexa-empty-message').remove();
+
+                    var $row = $('<div class="nexa-value-row"></div>');
+                    $row.append('<span class="nexa-drag-handle dashicons dashicons-menu"></span>');
+                    $row.append('<input type="text" name="' + inputName + '" value="" class="regular-text" placeholder="' + placeholder + '">');
+                    $row.append('<button type="button" class="button nexa-remove-value" title="Remove"><span class="dashicons dashicons-trash"></span></button>');
+
+                    $list.append($row);
+                    $row.find('input').focus();
+                });
+
+                // Remove value row
+                $(document).on('click', '.nexa-remove-value', function(e) {
+                    e.preventDefault();
+                    var $row = $(this).closest('.nexa-value-row');
+                    var $list = $row.parent();
+                    $row.remove();
+
+                    // Show empty message if no rows left
+                    if ($list.find('.nexa-value-row').length === 0) {
+                        $list.append('<p class="nexa-empty-message">No items added yet.</p>');
+                    }
+                });
+
+                // Make lists sortable (using jQuery UI if available)
+                if ($.fn.sortable) {
+                    $('.nexa-values-list').sortable({
+                        handle: '.nexa-drag-handle',
+                        items: '.nexa-value-row',
+                        placeholder: 'nexa-sortable-placeholder',
+                        cursor: 'grabbing'
+                    });
+                }
+            });
+        })(jQuery);
         </script>
         <?php
     }

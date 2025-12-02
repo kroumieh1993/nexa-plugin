@@ -1133,6 +1133,20 @@ class Nexa_RE_Shortcodes {
 
         $current_user = wp_get_current_user();
 
+        // Fetch agency parameters for dropdowns
+        $city_options          = [];
+        $property_type_options = [];
+        $params_result         = $api->list_agency_parameters();
+
+        if ( $params_result['ok'] && ! empty( $params_result['data']['parameters'] ) ) {
+            $parameters = $params_result['data']['parameters'];
+            if ( ! empty( $parameters['city'] ) && is_array( $parameters['city'] ) ) {
+                $city_options = array_column( $parameters['city'], 'value' );
+            }
+            if ( ! empty( $parameters['property_type'] ) && is_array( $parameters['property_type'] ) ) {
+                $property_type_options = array_column( $parameters['property_type'], 'value' );
+            }
+        }
 
         // Needed for image picker (gallery) in frontend form
         if ( function_exists( 'wp_enqueue_media' ) ) {
@@ -1144,7 +1158,7 @@ class Nexa_RE_Shortcodes {
 
         ob_start();
         // variables are already in scope: $messages, $properties, $total_properties,
-        // $properties_this_week, $current_user
+        // $properties_this_week, $current_user, $city_options, $property_type_options
         include NEXA_RE_PLUGIN_DIR . 'views/dashboard-shell.php';
         return ob_get_clean();
     }
