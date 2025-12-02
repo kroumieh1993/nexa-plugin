@@ -29,6 +29,7 @@ class Nexa_RE_Shortcodes {
             'max_price'     => '',
             'per_page'      => '10',
             'show_filter'   => 'true',
+            'show_map'      => 'true',
         ], $atts, 'nexa_properties' );
 
         // Fixed API URL from settings class
@@ -103,6 +104,23 @@ class Nexa_RE_Shortcodes {
         
         // Determine if filter form should be shown
         $show_filter = filter_var( $atts['show_filter'], FILTER_VALIDATE_BOOLEAN );
+        $show_map    = filter_var( $atts['show_map'], FILTER_VALIDATE_BOOLEAN );
+
+        // Check if any properties have location data for the map
+        $properties_with_location = [];
+        if ( $show_map && is_array( $properties ) ) {
+            foreach ( $properties as $prop ) {
+                if ( ! empty( $prop['latitude'] ) && ! empty( $prop['longitude'] ) ) {
+                    $properties_with_location[] = $prop;
+                }
+            }
+        }
+        $has_map_data = ! empty( $properties_with_location );
+
+        // Enqueue map assets if showing map
+        if ( $show_map && $has_map_data ) {
+            nexa_re_enqueue_map_assets();
+        }
 
         ob_start();
         ?>
@@ -209,69 +227,229 @@ class Nexa_RE_Shortcodes {
             <?php if ( empty( $properties ) || ! is_array( $properties ) ) : ?>
                 <p class="nexa-no-results">No properties found matching your criteria.</p>
             <?php else : ?>
-            <div class="nexa-properties-grid">
-                <?php foreach ( $properties as $property ) :
-                    $first_image = '';
-                    if ( ! empty( $property['images'] ) && is_array( $property['images'] ) ) {
-                        $first_image = $property['images'][0]['url'] ?? '';
+                <?php if ( $show_map && $has_map_data ) : ?>
+                <!-- Two-column layout with map -->
+                <div class="nexa-properties-split-layout">
+                    <div class="nexa-properties-list-column">
+                        <div class="nexa-properties-grid nexa-properties-grid-compact">
+                            <?php foreach ( $properties as $index => $property ) :
+                                $first_image = '';
+                                if ( ! empty( $property['images'] ) && is_array( $property['images'] ) ) {
+                                    $first_image = $property['images'][0]['url'] ?? '';
+                                }
+
+                                $prop_id     = $property['id'] ?? $index;
+                                $title       = $property['title'] ?? '';
+                                $city        = $property['city'] ?? '';
+                                $category    = $property['category'] ?? '';
+                                $price       = isset( $property['price'] ) ? $property['price'] : null;
+                                $bedrooms    = $property['bedrooms'] ?? null;
+                                $bathrooms   = $property['bathrooms'] ?? null;
+                                $detail_url  = self::get_property_url( $property );
+                                ?>
+                                <a class="nexa-property-card" href="<?php echo esc_url( $detail_url ); ?>" data-property-id="<?php echo esc_attr( $prop_id ); ?>">
+                                    <div class="nexa-property-image">
+                                        <?php if ( $first_image ) : ?>
+                                            <img src="<?php echo esc_url( $first_image ); ?>" alt="<?php echo esc_attr( $title ); ?>">
+                                        <?php else : ?>
+                                            <div class="nexa-property-image-placeholder">No image</div>
+                                        <?php endif; ?>
+                                        <?php if ( $category ) : ?>
+                                            <span class="nexa-property-chip"><?php echo esc_html( ucfirst( $category ) ); ?></span>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="nexa-property-body">
+                                        <div class="nexa-property-top">
+                                            <h3 class="nexa-property-title"><?php echo esc_html( $title ); ?></h3>
+                                            <?php if ( $price ) : ?>
+                                                <div class="nexa-property-price">
+                                                    <?php echo esc_html( number_format_i18n( $price ) ); ?>
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
+                                        <p class="nexa-property-location"><?php echo esc_html( $city ); ?></p>
+
+                                        <div class="nexa-property-meta">
+                                            <?php if ( $bedrooms ) : ?>
+                                                <span><?php echo intval( $bedrooms ); ?> Bedrooms</span>
+                                            <?php endif; ?>
+                                            <?php if ( $bathrooms ) : ?>
+                                                <span><?php echo intval( $bathrooms ); ?> Bathrooms</span>
+                                            <?php endif; ?>
+                                        </div>
+
+                                        <span class="nexa-property-view-btn">View details</span>
+                                    </div>
+                                </a>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                    <div class="nexa-properties-map-column">
+                        <div id="nexa-properties-list-map" class="nexa-map-container nexa-map-list"></div>
+                    </div>
+                </div>
+                
+                <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    if (typeof L === 'undefined') return;
+                    
+                    var mapEl = document.getElementById('nexa-properties-list-map');
+                    if (!mapEl) return;
+
+                    var propertiesData = <?php echo wp_json_encode( array_map( function( $p ) {
+                        return [
+                            'id'        => $p['id'] ?? 0,
+                            'title'     => $p['title'] ?? '',
+                            'city'      => $p['city'] ?? '',
+                            'price'     => isset( $p['price'] ) ? number_format_i18n( $p['price'] ) : '',
+                            'latitude'  => $p['latitude'] ?? null,
+                            'longitude' => $p['longitude'] ?? null,
+                            'url'       => self::get_property_url( $p ),
+                        ];
+                    }, $properties_with_location ) ); ?>;
+
+                    var map = L.map('nexa-properties-list-map');
+
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+                        maxZoom: 19
+                    }).addTo(map);
+
+                    // Create marker cluster group
+                    var markers = L.markerClusterGroup({
+                        iconCreateFunction: function(cluster) {
+                            var count = cluster.getChildCount();
+                            var size = 'small';
+                            if (count >= 10) size = 'medium';
+                            if (count >= 50) size = 'large';
+                            
+                            return L.divIcon({
+                                html: '<div class="nexa-cluster-icon nexa-cluster-icon-' + size + '">' + count + '</div>',
+                                className: '',
+                                iconSize: null
+                            });
+                        }
+                    });
+
+                    var bounds = [];
+                    var markerMap = {};
+
+                    propertiesData.forEach(function(prop) {
+                        if (!prop.latitude || !prop.longitude) return;
+                        
+                        var lat = parseFloat(prop.latitude);
+                        var lng = parseFloat(prop.longitude);
+                        if (isNaN(lat) || isNaN(lng)) return;
+
+                        bounds.push([lat, lng]);
+
+                        var popupContent = '<div class="nexa-popup-content">' +
+                            '<p class="nexa-popup-title">' + prop.title + '</p>' +
+                            (prop.city ? '<p class="nexa-popup-address">📍 ' + prop.city + '</p>' : '') +
+                            (prop.price ? '<p class="nexa-popup-price">' + prop.price + '</p>' : '') +
+                            '<a href="' + prop.url + '" class="nexa-popup-link">View Details →</a>' +
+                            '</div>';
+
+                        var marker = L.marker([lat, lng])
+                            .bindPopup(popupContent);
+                        
+                        markerMap[prop.id] = marker;
+                        markers.addLayer(marker);
+                    });
+
+                    map.addLayer(markers);
+
+                    // Fit map to markers
+                    if (bounds.length > 0) {
+                        map.fitBounds(bounds, { padding: [30, 30] });
+                    } else {
+                        map.setView([33.8886, 35.4955], 8);
                     }
 
-                    $title       = $property['title'] ?? '';
-                    $city        = $property['city'] ?? '';
-                    $category    = $property['category'] ?? '';
-                    $price       = isset( $property['price'] ) ? $property['price'] : null;
-                    $bedrooms    = $property['bedrooms'] ?? null;
-                    $bathrooms   = $property['bathrooms'] ?? null;
-                    $detail_url  = self::get_property_url( $property );
-                    ?>
-                    <a class="nexa-property-card" href="<?php echo esc_url( $detail_url ); ?>">
-                        <div class="nexa-property-image">
-                            <?php if ( $first_image ) : ?>
-                                <img src="<?php echo esc_url( $first_image ); ?>" alt="<?php echo esc_attr( $title ); ?>">
-                            <?php else : ?>
-                                <div class="nexa-property-image-placeholder">No image</div>
-                            <?php endif; ?>
-                            <?php if ( $category ) : ?>
-                                <span class="nexa-property-chip"><?php echo esc_html( ucfirst( $category ) ); ?></span>
-                            <?php endif; ?>
-                        </div>
-                        <div class="nexa-property-body">
-                            <div class="nexa-property-top">
-                                <h3 class="nexa-property-title"><?php echo esc_html( $title ); ?></h3>
-                                <?php if ( $price ) : ?>
-                                    <div class="nexa-property-price">
-                                        <?php echo esc_html( number_format_i18n( $price ) ); ?>
-                                    </div>
+                    // Highlight property on map when hovering over card
+                    document.querySelectorAll('.nexa-property-card[data-property-id]').forEach(function(card) {
+                        card.addEventListener('mouseenter', function() {
+                            var propId = this.dataset.propertyId;
+                            if (markerMap[propId]) {
+                                markerMap[propId].openPopup();
+                            }
+                        });
+                    });
+                });
+                </script>
+                <?php else : ?>
+                <!-- Standard grid layout -->
+                <div class="nexa-properties-grid">
+                    <?php foreach ( $properties as $property ) :
+                        $first_image = '';
+                        if ( ! empty( $property['images'] ) && is_array( $property['images'] ) ) {
+                            $first_image = $property['images'][0]['url'] ?? '';
+                        }
+
+                        $title       = $property['title'] ?? '';
+                        $city        = $property['city'] ?? '';
+                        $category    = $property['category'] ?? '';
+                        $price       = isset( $property['price'] ) ? $property['price'] : null;
+                        $bedrooms    = $property['bedrooms'] ?? null;
+                        $bathrooms   = $property['bathrooms'] ?? null;
+                        $detail_url  = self::get_property_url( $property );
+                        ?>
+                        <a class="nexa-property-card" href="<?php echo esc_url( $detail_url ); ?>">
+                            <div class="nexa-property-image">
+                                <?php if ( $first_image ) : ?>
+                                    <img src="<?php echo esc_url( $first_image ); ?>" alt="<?php echo esc_attr( $title ); ?>">
+                                <?php else : ?>
+                                    <div class="nexa-property-image-placeholder">No image</div>
+                                <?php endif; ?>
+                                <?php if ( $category ) : ?>
+                                    <span class="nexa-property-chip"><?php echo esc_html( ucfirst( $category ) ); ?></span>
                                 <?php endif; ?>
                             </div>
-                            <p class="nexa-property-location"><?php echo esc_html( $city ); ?></p>
+                            <div class="nexa-property-body">
+                                <div class="nexa-property-top">
+                                    <h3 class="nexa-property-title"><?php echo esc_html( $title ); ?></h3>
+                                    <?php if ( $price ) : ?>
+                                        <div class="nexa-property-price">
+                                            <?php echo esc_html( number_format_i18n( $price ) ); ?>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                                <p class="nexa-property-location"><?php echo esc_html( $city ); ?></p>
 
-                            <div class="nexa-property-meta">
-                                <?php if ( $bedrooms ) : ?>
-                                    <span><?php echo intval( $bedrooms ); ?> Bedrooms</span>
-                                <?php endif; ?>
-                                <?php if ( $bathrooms ) : ?>
-                                    <span><?php echo intval( $bathrooms ); ?> Bathrooms</span>
-                                <?php endif; ?>
+                                <div class="nexa-property-meta">
+                                    <?php if ( $bedrooms ) : ?>
+                                        <span><?php echo intval( $bedrooms ); ?> Bedrooms</span>
+                                    <?php endif; ?>
+                                    <?php if ( $bathrooms ) : ?>
+                                        <span><?php echo intval( $bathrooms ); ?> Bathrooms</span>
+                                    <?php endif; ?>
+                                </div>
+
+                                <span class="nexa-property-view-btn">View details</span>
                             </div>
-
-                            <span class="nexa-property-view-btn">View details</span>
-                        </div>
-                    </a>
-                <?php endforeach; ?>
-            </div>
+                        </a>
+                    <?php endforeach; ?>
+                </div>
+                <?php endif; ?>
             <?php endif; ?>
         </div>
 
         <style>
             .nexa-properties-wrapper {
-                max-width: 1200px;
+                max-width: 1400px;
                 margin: 0 auto;
+            }
+            .nexa-properties-wrapper.nexa-has-map {
+                max-width: 1600px;
             }
             .nexa-properties-grid {
                 display: grid;
                 grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
                 gap: 24px;
+            }
+            .nexa-properties-grid-compact {
+                grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+                gap: 16px;
             }
             .nexa-property-card {
                 background: #ffffff;
@@ -280,10 +458,11 @@ class Nexa_RE_Shortcodes {
                 box-shadow: 0 10px 25px rgba(15,23,42,0.08);
                 display: flex;
                 flex-direction: column;
-                transition: transform 0.15s ease, box-shadow 0.15s ease;
+                transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
                 text-decoration: none;
                 color: inherit;
                 position: relative;
+                border: 2px solid transparent;
             }
             .nexa-property-card:hover {
                 transform: translateY(-6px);
