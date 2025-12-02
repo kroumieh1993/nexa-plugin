@@ -6,6 +6,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 $property = get_query_var( 'nexa_property' );
 $error    = get_query_var( 'nexa_property_error' );
 
+// Enqueue map assets if property has location data
+$has_location = ! empty( $property['latitude'] ) && ! empty( $property['longitude'] );
+if ( $has_location ) {
+    nexa_re_enqueue_map_assets();
+}
+
 get_header();
 ?>
 <main class="nexa-single-shell">
@@ -21,6 +27,9 @@ get_header();
         $bedrooms    = $property['bedrooms'] ?? '';
         $bathrooms   = $property['bathrooms'] ?? '';
         $area        = $property['area'] ?? '';
+        $address     = $property['address'] ?? '';
+        $latitude    = $property['latitude'] ?? null;
+        $longitude   = $property['longitude'] ?? null;
         $description = $property['description'] ?? '';
         $images      = [];
 
@@ -134,6 +143,48 @@ get_header();
             <h3>Description</h3>
             <p><?php echo $description ? wp_kses_post( $description ) : 'No description provided.'; ?></p>
         </section>
+
+        <?php if ( $has_location && $latitude && $longitude ) : ?>
+            <section class="nexa-location-section">
+                <h3>Location</h3>
+                <?php if ( $address ) : ?>
+                    <div class="nexa-location-address">
+                        <span>📍</span> <?php echo esc_html( $address ); ?>
+                    </div>
+                <?php endif; ?>
+                <div id="nexa-property-map" class="nexa-map-container nexa-map-single"
+                     data-lat="<?php echo esc_attr( $latitude ); ?>"
+                     data-lng="<?php echo esc_attr( $longitude ); ?>"
+                     data-title="<?php echo esc_attr( $title ); ?>">
+                </div>
+            </section>
+            <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                if (typeof L === 'undefined') return;
+                
+                var mapEl = document.getElementById('nexa-property-map');
+                if (!mapEl) return;
+                
+                var lat = parseFloat(mapEl.dataset.lat);
+                var lng = parseFloat(mapEl.dataset.lng);
+                var title = mapEl.dataset.title || 'Property Location';
+                
+                if (isNaN(lat) || isNaN(lng)) return;
+                
+                var map = L.map('nexa-property-map').setView([lat, lng], 15);
+                
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                    maxZoom: 19
+                }).addTo(map);
+                
+                L.marker([lat, lng])
+                    .addTo(map)
+                    .bindPopup('<strong>' + title + '</strong>')
+                    .openPopup();
+            });
+            </script>
+        <?php endif; ?>
 
         <?php
         $floor_plans = [];

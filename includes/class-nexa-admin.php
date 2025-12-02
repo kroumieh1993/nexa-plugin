@@ -238,6 +238,24 @@ class Nexa_RE_Admin {
 
         // Handle form submit
         if ( isset( $_POST['nexa_property_nonce'] ) && wp_verify_nonce( $_POST['nexa_property_nonce'], 'nexa_save_property' ) ) {
+            // Validate and sanitize latitude/longitude
+            $latitude  = null;
+            $longitude = null;
+
+            if ( isset( $_POST['latitude'] ) && $_POST['latitude'] !== '' ) {
+                $lat_val = floatval( $_POST['latitude'] );
+                if ( $lat_val >= -90 && $lat_val <= 90 ) {
+                    $latitude = $lat_val;
+                }
+            }
+
+            if ( isset( $_POST['longitude'] ) && $_POST['longitude'] !== '' ) {
+                $lng_val = floatval( $_POST['longitude'] );
+                if ( $lng_val >= -180 && $lng_val <= 180 ) {
+                    $longitude = $lng_val;
+                }
+            }
+
             $payload = [
                 'title'         => sanitize_text_field( $_POST['title'] ?? '' ),
                 'description'   => wp_kses_post( $_POST['description'] ?? '' ),
@@ -246,6 +264,8 @@ class Nexa_RE_Admin {
                 'property_type' => sanitize_text_field( $_POST['property_type'] ?? '' ),
                 'area'          => (int) ( $_POST['area'] ?? 0 ),
                 'address'       => sanitize_text_field( $_POST['address'] ?? '' ),
+                'latitude'      => $latitude,
+                'longitude'     => $longitude,
                 'price'         => $_POST['price'] !== '' ? (int) $_POST['price'] : null,
                 'bedrooms'      => $_POST['bedrooms'] !== '' ? (int) $_POST['bedrooms'] : null,
                 'bathrooms'     => $_POST['bathrooms'] !== '' ? (int) $_POST['bathrooms'] : null,
@@ -322,6 +342,8 @@ class Nexa_RE_Admin {
         $property_type = $property['property_type'] ?? '';
         $area        = $property['area'] ?? '';
         $address     = $property['address'] ?? '';
+        $latitude    = $property['latitude'] ?? '';
+        $longitude   = $property['longitude'] ?? '';
         $price       = $property['price'] ?? '';
         $bedrooms    = $property['bedrooms'] ?? '';
         $bathrooms   = $property['bathrooms'] ?? '';
@@ -339,6 +361,9 @@ class Nexa_RE_Admin {
         if ( ! empty( $property['floor_plans'] ) && is_array( $property['floor_plans'] ) ) {
             $floor_plans = $property['floor_plans'];
         }
+
+        // Enqueue map assets for admin
+        nexa_re_enqueue_map_assets();
 
         ?>
         <div class="wrap nexa-admin-wrap">
@@ -404,6 +429,24 @@ class Nexa_RE_Admin {
                                     <th scope="row"><label for="address">Address</label></th>
                                     <td>
                                         <input name="address" type="text" id="address" value="<?php echo esc_attr( $address ); ?>" class="regular-text">
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <th scope="row"><label>Location</label></th>
+                                    <td>
+                                        <div id="nexa-admin-map-picker" class="nexa-map-container nexa-map-picker" style="margin-bottom: 12px;"></div>
+                                        <p class="description" style="margin-bottom: 10px;">Click on the map to set the property location or enter coordinates manually below.</p>
+                                        <div style="display: flex; gap: 12px;">
+                                            <div style="flex: 1;">
+                                                <label for="latitude" style="display: block; margin-bottom: 4px; font-weight: 500;">Latitude</label>
+                                                <input name="latitude" type="number" step="any" id="latitude" value="<?php echo esc_attr( $latitude ); ?>" class="regular-text" placeholder="-90 to 90" min="-90" max="90">
+                                            </div>
+                                            <div style="flex: 1;">
+                                                <label for="longitude" style="display: block; margin-bottom: 4px; font-weight: 500;">Longitude</label>
+                                                <input name="longitude" type="number" step="any" id="longitude" value="<?php echo esc_attr( $longitude ); ?>" class="regular-text" placeholder="-180 to 180" min="-180" max="180">
+                                            </div>
+                                        </div>
                                     </td>
                                 </tr>
 
@@ -579,6 +622,63 @@ class Nexa_RE_Admin {
 
                     frame.open();
                 });
+
+                // Leaflet Map Picker
+                if (typeof L !== 'undefined' && $('#nexa-admin-map-picker').length) {
+                    var initialLat = parseFloat($('#latitude').val()) || 33.8886;
+                    var initialLng = parseFloat($('#longitude').val()) || 35.4955;
+                    var hasInitialCoords = $('#latitude').val() !== '' && $('#longitude').val() !== '';
+                    var defaultZoom = hasInitialCoords ? 14 : 8;
+
+                    var map = L.map('nexa-admin-map-picker').setView([initialLat, initialLng], defaultZoom);
+
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                        maxZoom: 19
+                    }).addTo(map);
+
+                    var marker = null;
+
+                    function updateMarker(lat, lng) {
+                        if (marker) {
+                            marker.setLatLng([lat, lng]);
+                        } else {
+                            marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+                            marker.on('dragend', function(e) {
+                                var pos = marker.getLatLng();
+                                $('#latitude').val(pos.lat.toFixed(7));
+                                $('#longitude').val(pos.lng.toFixed(7));
+                            });
+                        }
+                    }
+
+                    if (hasInitialCoords) {
+                        updateMarker(initialLat, initialLng);
+                    }
+
+                    map.on('click', function(e) {
+                        var lat = e.latlng.lat;
+                        var lng = e.latlng.lng;
+                        $('#latitude').val(lat.toFixed(7));
+                        $('#longitude').val(lng.toFixed(7));
+                        updateMarker(lat, lng);
+                    });
+
+                    // Update marker when inputs change
+                    $('#latitude, #longitude').on('change', function() {
+                        var lat = parseFloat($('#latitude').val());
+                        var lng = parseFloat($('#longitude').val());
+                        if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+                            updateMarker(lat, lng);
+                            map.setView([lat, lng], 14);
+                        }
+                    });
+
+                    // Fix map rendering when in a hidden/tab context
+                    setTimeout(function() {
+                        map.invalidateSize();
+                    }, 100);
+                }
             })(jQuery);
         </script>
         <?php

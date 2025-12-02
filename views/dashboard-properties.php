@@ -113,6 +113,9 @@
             <button type="button" class="nexa-tab-btn nexa-tab-active" data-tab="basic">
                 Basic Info
             </button>
+            <button type="button" class="nexa-tab-btn" data-tab="location">
+                Location
+            </button>
             <button type="button" class="nexa-tab-btn" data-tab="details">
                 Details
             </button>
@@ -203,6 +206,34 @@
                     </div>
                 </div>
 
+                <!-- Tab: Location -->
+                <div class="nexa-tab-panel" data-tab-panel="location" style="display:none;">
+                    <div class="nexa-location-tab-content">
+                        <div class="nexa-form-row" style="margin-bottom: 12px;">
+                            <label class="nexa-form-label">Pin Location on Map</label>
+                            <p class="nexa-section-subtitle" style="margin-bottom: 8px;">
+                                Click on the map to set the property's location, or drag the marker to adjust. You can also enter coordinates manually.
+                            </p>
+                        </div>
+                        <div id="nexa-front-map-picker" class="nexa-map-container nexa-map-picker" style="margin-bottom: 16px;"></div>
+                        <div class="nexa-coords-wrapper">
+                            <div class="nexa-coord-field">
+                                <label for="nexa-latitude">Latitude</label>
+                                <input class="nexa-input" type="number" step="any" id="nexa-latitude" name="latitude" placeholder="-90 to 90" min="-90" max="90">
+                                <div class="nexa-coord-error" id="nexa-lat-error" style="display:none;">Latitude must be between -90 and 90</div>
+                            </div>
+                            <div class="nexa-coord-field">
+                                <label for="nexa-longitude">Longitude</label>
+                                <input class="nexa-input" type="number" step="any" id="nexa-longitude" name="longitude" placeholder="-180 to 180" min="-180" max="180">
+                                <div class="nexa-coord-error" id="nexa-lng-error" style="display:none;">Longitude must be between -180 and 180</div>
+                            </div>
+                        </div>
+                        <div class="nexa-map-hint">
+                            <strong>Tip:</strong> Zoom in to accurately position the property marker. The coordinates will update automatically as you move the marker.
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Tab: Details -->
                 <div class="nexa-tab-panel" data-tab-panel="details" style="display:none;">
                     <div class="nexa-form-grid">
@@ -256,6 +287,102 @@
         var $submitBtn     = $('#nexa-property-form').find('button[type="submit"]');
         var mediaFrame     = null;
         var floorPlanCounter = 0;
+        var frontMap = null;
+        var frontMapMarker = null;
+        var frontMapInitialized = false;
+
+        // Initialize front map when Location tab is shown
+        function initFrontMap() {
+            if (frontMapInitialized || typeof L === 'undefined') return;
+            
+            var mapEl = document.getElementById('nexa-front-map-picker');
+            if (!mapEl) return;
+
+            var initialLat = parseFloat($('#nexa-latitude').val()) || 33.8886;
+            var initialLng = parseFloat($('#nexa-longitude').val()) || 35.4955;
+            var hasInitialCoords = $('#nexa-latitude').val() !== '' && $('#nexa-longitude').val() !== '';
+            var defaultZoom = hasInitialCoords ? 14 : 8;
+
+            frontMap = L.map('nexa-front-map-picker').setView([initialLat, initialLng], defaultZoom);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+                maxZoom: 19
+            }).addTo(frontMap);
+
+            if (hasInitialCoords) {
+                updateFrontMapMarker(initialLat, initialLng);
+            }
+
+            frontMap.on('click', function(e) {
+                var lat = e.latlng.lat;
+                var lng = e.latlng.lng;
+                $('#nexa-latitude').val(lat.toFixed(7));
+                $('#nexa-longitude').val(lng.toFixed(7));
+                updateFrontMapMarker(lat, lng);
+                validateCoordinates();
+            });
+
+            frontMapInitialized = true;
+
+            // Force map resize after a short delay
+            setTimeout(function() {
+                if (frontMap) frontMap.invalidateSize();
+            }, 100);
+        }
+
+        function updateFrontMapMarker(lat, lng) {
+            if (!frontMap) return;
+            
+            if (frontMapMarker) {
+                frontMapMarker.setLatLng([lat, lng]);
+            } else {
+                frontMapMarker = L.marker([lat, lng], { draggable: true }).addTo(frontMap);
+                frontMapMarker.on('dragend', function(e) {
+                    var pos = frontMapMarker.getLatLng();
+                    $('#nexa-latitude').val(pos.lat.toFixed(7));
+                    $('#nexa-longitude').val(pos.lng.toFixed(7));
+                    validateCoordinates();
+                });
+            }
+        }
+
+        function validateCoordinates() {
+            var lat = parseFloat($('#nexa-latitude').val());
+            var lng = parseFloat($('#nexa-longitude').val());
+            var latValid = isNaN(lat) || (lat >= -90 && lat <= 90);
+            var lngValid = isNaN(lng) || (lng >= -180 && lng <= 180);
+
+            if (!latValid) {
+                $('#nexa-lat-error').show();
+                $('#nexa-latitude').addClass('nexa-input-error');
+            } else {
+                $('#nexa-lat-error').hide();
+                $('#nexa-latitude').removeClass('nexa-input-error');
+            }
+
+            if (!lngValid) {
+                $('#nexa-lng-error').show();
+                $('#nexa-longitude').addClass('nexa-input-error');
+            } else {
+                $('#nexa-lng-error').hide();
+                $('#nexa-longitude').removeClass('nexa-input-error');
+            }
+
+            return latValid && lngValid;
+        }
+
+        // Update marker when inputs change
+        $('#nexa-latitude, #nexa-longitude').on('change', function() {
+            if (!validateCoordinates()) return;
+            
+            var lat = parseFloat($('#nexa-latitude').val());
+            var lng = parseFloat($('#nexa-longitude').val());
+            if (!isNaN(lat) && !isNaN(lng) && frontMap) {
+                updateFrontMapMarker(lat, lng);
+                frontMap.setView([lat, lng], 14);
+            }
+        });
 
         function createFloorPlanRow(fileUrl, label, order) {
             fileUrl = fileUrl || '';
@@ -309,12 +436,23 @@
             $('#nexa-property-type').val('');
             $('#nexa-area').val('');
             $('#nexa-address').val('');
+            $('#nexa-latitude').val('');
+            $('#nexa-longitude').val('');
             $('#nexa-price').val('');
             $('#nexa-bedrooms').val('');
             $('#nexa-bathrooms').val('');
             $imagesPreview.empty();
             $floorPlansContainer.empty();
             floorPlanCounter = 0;
+
+            // Reset map marker
+            if (frontMapMarker) {
+                frontMap.removeLayer(frontMapMarker);
+                frontMapMarker = null;
+            }
+            if (frontMap) {
+                frontMap.setView([33.8886, 35.4955], 8);
+            }
 
             // Reset to Basic tab
             $('.nexa-tab-btn').removeClass('nexa-tab-active');
@@ -340,9 +478,21 @@
             $('#nexa-property-type').val(property.property_type || '');
             $('#nexa-area').val(property.area || '');
             $('#nexa-address').val(property.address || '');
+            $('#nexa-latitude').val(property.latitude != null ? property.latitude : '');
+            $('#nexa-longitude').val(property.longitude != null ? property.longitude : '');
             $('#nexa-price').val(property.price != null ? property.price : '');
             $('#nexa-bedrooms').val(property.bedrooms != null ? property.bedrooms : '');
             $('#nexa-bathrooms').val(property.bathrooms != null ? property.bathrooms : '');
+
+            // Update map marker if location exists
+            if (property.latitude && property.longitude && frontMap) {
+                var lat = parseFloat(property.latitude);
+                var lng = parseFloat(property.longitude);
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    updateFrontMapMarker(lat, lng);
+                    frontMap.setView([lat, lng], 14);
+                }
+            }
 
             $imagesPreview.empty();
             if (Array.isArray(property.images)) {
@@ -416,7 +566,7 @@
             }
         });
 
-        // Tabs (only Basic is active for now; others are placeholders)
+        // Tabs
         $('.nexa-tab-btn').on('click', function(e){
             e.preventDefault();
             var $btn = $(this);
@@ -431,6 +581,14 @@
 
             $('.nexa-tab-panel').hide();
             $('.nexa-tab-panel[data-tab-panel="'+tab+'"]').show();
+
+            // Initialize map when Location tab is shown
+            if (tab === 'location') {
+                setTimeout(function() {
+                    initFrontMap();
+                    if (frontMap) frontMap.invalidateSize();
+                }, 100);
+            }
         });
 
         $('.nexa-edit-property').on('click', function(e){

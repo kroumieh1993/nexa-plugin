@@ -600,6 +600,24 @@ class Nexa_RE_Shortcodes {
                 $property_id = isset( $_POST['property_id'] ) ? (int) $_POST['property_id'] : 0;
                 $is_edit     = $property_id > 0;
 
+                // Validate and sanitize latitude/longitude
+                $latitude  = null;
+                $longitude = null;
+
+                if ( isset( $_POST['latitude'] ) && $_POST['latitude'] !== '' ) {
+                    $lat_val = floatval( $_POST['latitude'] );
+                    if ( $lat_val >= -90 && $lat_val <= 90 ) {
+                        $latitude = $lat_val;
+                    }
+                }
+
+                if ( isset( $_POST['longitude'] ) && $_POST['longitude'] !== '' ) {
+                    $lng_val = floatval( $_POST['longitude'] );
+                    if ( $lng_val >= -180 && $lng_val <= 180 ) {
+                        $longitude = $lng_val;
+                    }
+                }
+
                 $payload = [
                     'title'         => sanitize_text_field( $_POST['title'] ?? '' ),
                     'description'   => wp_kses_post( $_POST['description'] ?? '' ),
@@ -608,6 +626,8 @@ class Nexa_RE_Shortcodes {
                     'property_type' => sanitize_text_field( $_POST['property_type'] ?? '' ),
                     'area'          => $_POST['area'] !== '' ? (int) $_POST['area'] : null,
                     'address'       => sanitize_text_field( $_POST['address'] ?? '' ),
+                    'latitude'      => $latitude,
+                    'longitude'     => $longitude,
                     'price'         => $_POST['price'] !== '' ? (int) $_POST['price'] : null,
                     'bedrooms'      => $_POST['bedrooms'] !== '' ? (int) $_POST['bedrooms'] : null,
                     'bathrooms'     => $_POST['bathrooms'] !== '' ? (int) $_POST['bathrooms'] : null,
@@ -691,6 +711,9 @@ class Nexa_RE_Shortcodes {
         if ( function_exists( 'wp_enqueue_media' ) ) {
             wp_enqueue_media();
         }
+
+        // Enqueue map assets for the dashboard
+        nexa_re_enqueue_map_assets();
 
         ob_start();
         // variables are already in scope: $messages, $properties, $total_properties,
