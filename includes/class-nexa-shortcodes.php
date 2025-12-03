@@ -8,7 +8,6 @@ class Nexa_RE_Shortcodes {
 
     public static function register_shortcodes() {
         add_shortcode( 'nexa_properties', [ __CLASS__, 'render_properties' ] );
-        add_shortcode( 'nexa_agency_dashboard', [ __CLASS__, 'render_agency_dashboard' ] );
         add_shortcode( 'nexa_property_search', [ __CLASS__, 'render_property_search' ] );
     }
 
@@ -32,7 +31,12 @@ class Nexa_RE_Shortcodes {
      * @return string HTML output.
      */
     public static function render_property_search( $atts = [] ) {
-        $atts = shortcode_atts( [
+        // Fetch configuration from API
+        $api = new Nexa_RE_Api_Client();
+        $config = $api->get_shortcode_config( 'nexa_property_search' );
+
+        // Default attributes merged with API config
+        $defaults = [
             'properties_page' => '',
             'show_city'       => 'true',
             'show_category'   => 'true',
@@ -40,7 +44,39 @@ class Nexa_RE_Shortcodes {
             'show_price'      => 'true',
             'show_bedrooms'   => 'true',
             'show_bathrooms'  => 'true',
-        ], $atts, 'nexa_property_search' );
+            'button_text'     => 'Search Properties',
+            'primary_color'   => '#4f46e5',
+        ];
+
+        // Apply API config
+        if ( $config ) {
+            if ( isset( $config['show_city'] ) ) {
+                $defaults['show_city'] = $config['show_city'] ? 'true' : 'false';
+            }
+            if ( isset( $config['show_category'] ) ) {
+                $defaults['show_category'] = $config['show_category'] ? 'true' : 'false';
+            }
+            if ( isset( $config['show_type'] ) ) {
+                $defaults['show_type'] = $config['show_type'] ? 'true' : 'false';
+            }
+            if ( isset( $config['show_price'] ) ) {
+                $defaults['show_price'] = $config['show_price'] ? 'true' : 'false';
+            }
+            if ( isset( $config['show_bedrooms'] ) ) {
+                $defaults['show_bedrooms'] = $config['show_bedrooms'] ? 'true' : 'false';
+            }
+            if ( isset( $config['show_bathrooms'] ) ) {
+                $defaults['show_bathrooms'] = $config['show_bathrooms'] ? 'true' : 'false';
+            }
+            if ( ! empty( $config['button_text'] ) ) {
+                $defaults['button_text'] = $config['button_text'];
+            }
+            if ( ! empty( $config['primary_color'] ) ) {
+                $defaults['primary_color'] = $config['primary_color'];
+            }
+        }
+
+        $atts = shortcode_atts( $defaults, $atts, 'nexa_property_search' );
 
         // Determine the properties page URL
         $properties_url = $atts['properties_page'];
@@ -162,7 +198,7 @@ class Nexa_RE_Shortcodes {
                 <div class="nexa-search-action">
                     <button type="submit" class="nexa-search-btn">
                         <span class="nexa-search-btn-icon">🔍</span>
-                        Search Properties
+                        <?php echo esc_html( $atts['button_text'] ); ?>
                     </button>
                 </div>
             </form>
@@ -214,9 +250,9 @@ class Nexa_RE_Shortcodes {
             .nexa-search-field input:focus,
             .nexa-search-field select:focus {
                 outline: none;
-                border-color: #4f46e5;
+                border-color: <?php echo esc_attr( $atts['primary_color'] ); ?>;
                 background: #ffffff;
-                box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+                box-shadow: 0 0 0 3px <?php echo esc_attr( $atts['primary_color'] ); ?>1a;
             }
             .nexa-search-field input::placeholder {
                 color: #94a3b8;
@@ -247,7 +283,7 @@ class Nexa_RE_Shortcodes {
                 justify-content: center;
                 gap: 10px;
                 padding: 14px 32px;
-                background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+                background: <?php echo esc_attr( $atts['primary_color'] ); ?>;
                 border: none;
                 border-radius: 10px;
                 font-size: 16px;
@@ -259,7 +295,7 @@ class Nexa_RE_Shortcodes {
             }
             .nexa-search-btn:hover {
                 transform: translateY(-2px);
-                box-shadow: 0 8px 25px rgba(79, 70, 229, 0.35);
+                box-shadow: 0 8px 25px <?php echo esc_attr( $atts['primary_color'] ); ?>59;
             }
             .nexa-search-btn:active {
                 transform: translateY(0);
@@ -295,7 +331,12 @@ class Nexa_RE_Shortcodes {
     }
 
     public static function render_properties( $atts = [] ) {
-        $atts = shortcode_atts( [
+        // Fetch configuration from API
+        $api = new Nexa_RE_Api_Client();
+        $config = $api->get_shortcode_config( 'nexa_properties' );
+
+        // Default attributes
+        $defaults = [
             'city'          => '',
             'category'      => '',
             'property_type' => '',
@@ -304,7 +345,50 @@ class Nexa_RE_Shortcodes {
             'per_page'      => '10',
             'show_filter'   => 'true',
             'show_map'      => 'true',
-        ], $atts, 'nexa_properties' );
+            'columns'       => '3',
+            'card_style'    => 'default',
+            'primary_color' => '#4f46e5',
+            'show_price'    => 'true',
+            'show_bedrooms' => 'true',
+            'show_bathrooms' => 'true',
+            'show_city'     => 'true',
+        ];
+
+        // Apply API config
+        if ( $config ) {
+            if ( isset( $config['per_page'] ) ) {
+                $defaults['per_page'] = (string) intval( $config['per_page'] );
+            }
+            if ( isset( $config['show_filter'] ) ) {
+                $defaults['show_filter'] = $config['show_filter'] ? 'true' : 'false';
+            }
+            if ( isset( $config['show_map'] ) ) {
+                $defaults['show_map'] = $config['show_map'] ? 'true' : 'false';
+            }
+            if ( isset( $config['columns'] ) ) {
+                $defaults['columns'] = (string) intval( $config['columns'] );
+            }
+            if ( ! empty( $config['card_style'] ) ) {
+                $defaults['card_style'] = $config['card_style'];
+            }
+            if ( ! empty( $config['primary_color'] ) ) {
+                $defaults['primary_color'] = $config['primary_color'];
+            }
+            if ( isset( $config['show_price'] ) ) {
+                $defaults['show_price'] = $config['show_price'] ? 'true' : 'false';
+            }
+            if ( isset( $config['show_bedrooms'] ) ) {
+                $defaults['show_bedrooms'] = $config['show_bedrooms'] ? 'true' : 'false';
+            }
+            if ( isset( $config['show_bathrooms'] ) ) {
+                $defaults['show_bathrooms'] = $config['show_bathrooms'] ? 'true' : 'false';
+            }
+            if ( isset( $config['show_city'] ) ) {
+                $defaults['show_city'] = $config['show_city'] ? 'true' : 'false';
+            }
+        }
+
+        $atts = shortcode_atts( $defaults, $atts, 'nexa_properties' );
 
         // Fixed API URL from settings class
         $api_url   = rtrim( Nexa_RE_Settings::API_BASE_URL, '/' );
@@ -1038,195 +1122,6 @@ class Nexa_RE_Shortcodes {
             }
         </style>
         <?php
-        return ob_get_clean();
-    }
-
-    public static function render_agency_dashboard( $atts = [] ) {
-
-        // 1. Permissions
-        if ( ! is_user_logged_in() ) {
-            return '<p>You must be logged in to access your agency dashboard. <a href="' . esc_url( wp_login_url( get_permalink() ) ) . '">Log in</a></p>';
-        }
-
-        // Allow either our custom cap OR standard administrators
-        if ( ! current_user_can( 'manage_nexa_properties' ) && ! current_user_can( 'manage_options' ) ) {
-            return '<p>You do not have permission to access this dashboard.</p>';
-        }
-
-        // 2. API setup
-        $api_token = trim( get_option( Nexa_RE_Settings::OPTION_API_TOKEN, '' ) );
-        if ( ! $api_token ) {
-            return '<p><strong>Nexa:</strong> Agency API token is not configured. Contact your site administrator.</p>';
-        }
-
-        // Centralized API client
-        $api      = new Nexa_RE_Api_Client();
-        $messages = [];
-
-
-
-        // 3. Handle DELETE action (via GET)
-        if ( isset( $_GET['nexa_action'], $_GET['property_id'] ) && $_GET['nexa_action'] === 'delete_property' ) {
-            $property_id = (int) $_GET['property_id'];
-
-            if ( ! wp_verify_nonce( $_GET['_wpnonce'] ?? '', 'nexa_delete_property_' . $property_id ) ) {
-                $messages[] = [ 'type' => 'error', 'text' => 'Security check failed.' ];
-            } else {
-                $result = $api->delete_property( $property_id );
-
-                if ( ! $result['ok'] ) {
-                    $text = $result['error'] ? $result['error'] : 'API error (' . $result['code'] . ') deleting property.';
-                    $messages[] = [ 'type' => 'error', 'text' => 'Error deleting property: ' . $text ];
-                } else {
-                    $messages[] = [ 'type' => 'success', 'text' => 'Property deleted.' ];
-                }
-            }
-        }
-
-
-
-        // 4. (Optional) Handle save property (create/update) – hook up later if needed
-        // Keeping the structure here so design is ready for when you add the form.
-        if ( isset( $_POST['nexa_action'] ) && $_POST['nexa_action'] === 'save_property' ) {
-            if ( ! wp_verify_nonce( $_POST['nexa_property_nonce'] ?? '', 'nexa_save_property_front' ) ) {
-                $messages[] = [ 'type' => 'error', 'text' => 'Security check failed.' ];
-            } else {
-                $property_id = isset( $_POST['property_id'] ) ? (int) $_POST['property_id'] : 0;
-                $is_edit     = $property_id > 0;
-
-                // Validate and sanitize latitude/longitude
-                $latitude  = null;
-                $longitude = null;
-
-                if ( isset( $_POST['latitude'] ) && $_POST['latitude'] !== '' ) {
-                    $lat_val = floatval( $_POST['latitude'] );
-                    if ( $lat_val >= -90 && $lat_val <= 90 ) {
-                        $latitude = $lat_val;
-                    }
-                }
-
-                if ( isset( $_POST['longitude'] ) && $_POST['longitude'] !== '' ) {
-                    $lng_val = floatval( $_POST['longitude'] );
-                    if ( $lng_val >= -180 && $lng_val <= 180 ) {
-                        $longitude = $lng_val;
-                    }
-                }
-
-                $payload = [
-                    'title'         => sanitize_text_field( $_POST['title'] ?? '' ),
-                    'description'   => wp_kses_post( $_POST['description'] ?? '' ),
-                    'category'      => sanitize_text_field( $_POST['category'] ?? '' ),
-                    'city'          => sanitize_text_field( $_POST['city'] ?? '' ),
-                    'property_type' => sanitize_text_field( $_POST['property_type'] ?? '' ),
-                    'area'          => $_POST['area'] !== '' ? (int) $_POST['area'] : null,
-                    'address'       => sanitize_text_field( $_POST['address'] ?? '' ),
-                    'latitude'      => $latitude,
-                    'longitude'     => $longitude,
-                    'price'         => $_POST['price'] !== '' ? (int) $_POST['price'] : null,
-                    'bedrooms'      => $_POST['bedrooms'] !== '' ? (int) $_POST['bedrooms'] : null,
-                    'bathrooms'     => $_POST['bathrooms'] !== '' ? (int) $_POST['bathrooms'] : null,
-                ];
-
-                $images = [];
-                if ( ! empty( $_POST['images'] ) && is_array( $_POST['images'] ) ) {
-                    foreach ( $_POST['images'] as $url ) {
-                        $url = esc_url_raw( $url );
-                        if ( $url ) {
-                            $images[] = $url;
-                        }
-                    }
-                }
-                $payload['images'] = $images;
-
-                // Handle floor plans
-                $floor_plans = [];
-                if ( ! empty( $_POST['floor_plans'] ) && is_array( $_POST['floor_plans'] ) ) {
-                    foreach ( $_POST['floor_plans'] as $plan ) {
-                        $file_url = isset( $plan['file_url'] ) ? esc_url_raw( $plan['file_url'] ) : '';
-                        if ( $file_url ) {
-                            $floor_plans[] = [
-                                'file_url' => $file_url,
-                                'label'    => isset( $plan['label'] ) ? sanitize_text_field( $plan['label'] ) : '',
-                                'order'    => isset( $plan['order'] ) ? (int) $plan['order'] : 0,
-                            ];
-                        }
-                    }
-                }
-                $payload['floor_plans'] = $floor_plans;
-
-                // Use API client
-                if ( $is_edit ) {
-                    $result = $api->update_property( $property_id, $payload );
-                } else {
-                    $result = $api->create_property( $payload );
-                }
-
-                if ( ! $result['ok'] ) {
-                    $text = $result['error'] ? $result['error'] : 'API error (' . $result['code'] . ') saving property.';
-                    $messages[] = [ 'type' => 'error', 'text' => $text ];
-                } else {
-                    $messages[] = [ 'type' => 'success', 'text' => 'Property saved successfully.' ];
-                }
-
-            }
-        }
-
-        // 5. Fetch properties for list & stats
-        $properties = [];
-        $list_result = $api->list_properties();
-
-        if ( $list_result['ok'] ) {
-            $data       = $list_result['data'];
-            $properties = $data['data'] ?? $data;
-            if ( ! is_array( $properties ) ) {
-                $properties = [];
-            }
-        } else {
-            $messages[] = [ 'type' => 'error', 'text' => 'Error loading properties: ' . ( $list_result['error'] ?: 'API ' . $list_result['code'] ) ];
-        }
-
-
-        // Stats
-        $total_properties       = count( $properties );
-        $properties_this_week   = 0;
-        $now                    = current_time( 'timestamp' );
-        $week_start             = strtotime( 'monday this week', $now );
-
-        foreach ( $properties as $p ) {
-            if ( ! empty( $p['created_at'] ) && strtotime( $p['created_at'] ) >= $week_start ) {
-                $properties_this_week++;
-            }
-        }
-
-        $current_user = wp_get_current_user();
-
-        // Fetch agency parameters for dropdowns
-        $city_options          = [];
-        $property_type_options = [];
-        $params_result         = $api->list_agency_parameters();
-
-        if ( $params_result['ok'] && ! empty( $params_result['data']['parameters'] ) ) {
-            $parameters = $params_result['data']['parameters'];
-            if ( ! empty( $parameters['city'] ) && is_array( $parameters['city'] ) ) {
-                $city_options = array_column( $parameters['city'], 'value' );
-            }
-            if ( ! empty( $parameters['property_type'] ) && is_array( $parameters['property_type'] ) ) {
-                $property_type_options = array_column( $parameters['property_type'], 'value' );
-            }
-        }
-
-        // Needed for image picker (gallery) in frontend form
-        if ( function_exists( 'wp_enqueue_media' ) ) {
-            wp_enqueue_media();
-        }
-
-        // Enqueue map assets for the dashboard
-        nexa_re_enqueue_map_assets();
-
-        ob_start();
-        // variables are already in scope: $messages, $properties, $total_properties,
-        // $properties_this_week, $current_user, $city_options, $property_type_options
-        include NEXA_RE_PLUGIN_DIR . 'views/dashboard-shell.php';
         return ob_get_clean();
     }
 

@@ -105,6 +105,19 @@ class Nexa_RE_Settings {
         ?>
         <div class="wrap">
             <h1>Nexa Real Estate</h1>
+
+            <div class="nexa-saas-notice" style="margin: 20px 0; padding: 15px 20px; background: #f0f9ff; border-left: 4px solid #0ea5e9; border-radius: 4px;">
+                <p style="margin: 0; font-size: 14px; color: #0c4a6e;">
+                    <strong>Manage your agency settings at:</strong>
+                    <a href="https://saas.nexapropertysuite.com" target="_blank" rel="noopener noreferrer" style="color: #0369a1; text-decoration: underline;">
+                        saas.nexapropertysuite.com
+                    </a>
+                </p>
+                <p style="margin: 8px 0 0 0; font-size: 13px; color: #475569;">
+                    Property management, custom parameters (cities, property types), and shortcode configurations are managed through the SaaS dashboard.
+                </p>
+            </div>
+
             <form method="post" action="options.php">
                 <?php
                 settings_fields( 'nexa_re_settings' );

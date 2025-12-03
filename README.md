@@ -4,14 +4,14 @@ A WordPress plugin that connects your site to the Nexa real estate SaaS and disp
 
 ## Features
 
-- **Property Management**: Create, edit, and delete properties through the admin interface or frontend dashboard
 - **Property Display**: Show properties using the `[nexa_properties]` shortcode
 - **Property Search Bar**: Quick search bar shortcode for homepages that redirects to filtered property listings
 - **Single Property Pages**: Dedicated pages for each property with image gallery, details, and floor plans
 - **Interactive Maps**: Display property locations on maps using Leaflet (OpenStreetMap) or Google Maps
-- **Location Picker**: Pin property locations on a map when creating/editing properties
 - **Map View**: Two-column layout showing properties list alongside an interactive map with clustered markers
 - **Filtering**: Advanced search and filter functionality for properties
+- **Centralized Configuration**: Shortcode appearance and settings are managed through the SaaS dashboard
+- **Image API**: REST API endpoints for image management from the SaaS platform
 
 ## Installation
 
@@ -23,11 +23,14 @@ A WordPress plugin that connects your site to the Nexa real estate SaaS and disp
 ## Configuration
 
 ### API Token
-Get your API token from the Nexa Property Suite and paste it in Settings → Nexa Real Estate.
+Get your API token from the Nexa Property Suite SaaS dashboard and paste it in Settings → Nexa Real Estate.
 
 ### Map Settings
 Choose between Leaflet (free, no API key required) or Google Maps (requires API key).
 See [docs/MAP_INTEGRATION.md](docs/MAP_INTEGRATION.md) for detailed configuration instructions.
+
+### SaaS Dashboard
+Property management, custom parameters (cities, property types), and shortcode configurations are managed through the SaaS dashboard at [saas.nexapropertysuite.com](https://saas.nexapropertysuite.com).
 
 ## Shortcodes
 
@@ -35,6 +38,8 @@ See [docs/MAP_INTEGRATION.md](docs/MAP_INTEGRATION.md) for detailed configuratio
 ```
 [nexa_properties]
 ```
+
+Displays a grid of properties with optional filtering and map view. Configuration (layout, columns, colors, visible fields) is fetched from the SaaS API.
 
 **Attributes:**
 - `city` - Filter by city
@@ -67,11 +72,48 @@ A quick search bar that can be placed on any page (e.g., homepage) to allow user
 [nexa_property_search properties_page="/properties/"]
 ```
 
-### Agency Dashboard
+## REST API Endpoints
+
+The plugin provides REST API endpoints for the SaaS platform to manage images:
+
+### Upload Image
+`POST /wp-json/nexa-plugin/v1/upload-image`
+
+Uploads an image to the WordPress media library.
+
+**Headers:**
+- `X-AGENCY-TOKEN` - Your API token (required)
+
+**Body:**
+- `image` - The image file (multipart/form-data)
+
+**Response:**
+```json
+{
+  "success": true,
+  "attachment_id": 123,
+  "url": "https://example.com/wp-content/uploads/2024/01/image.jpg"
+}
 ```
-[nexa_agency_dashboard]
+
+### Delete Image
+`DELETE /wp-json/nexa-plugin/v1/delete-image`
+
+Deletes an image from the WordPress media library.
+
+**Headers:**
+- `X-AGENCY-TOKEN` - Your API token (required)
+
+**Parameters:**
+- `url` - The URL of the image to delete
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Image deleted successfully."
+}
 ```
-Displays a full agency dashboard with property management capabilities.
 
 ## Documentation
 

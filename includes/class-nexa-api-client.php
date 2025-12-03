@@ -9,6 +9,11 @@ class Nexa_RE_Api_Client {
     protected $base_url;
     protected $token;
 
+    /**
+     * Cache TTL for shortcode configs (5 minutes).
+     */
+    const CONFIG_CACHE_TTL = 300;
+
     public function __construct() {
         $this->base_url = rtrim( Nexa_RE_Settings::API_BASE_URL, '/' );
         $this->token    = trim( get_option( Nexa_RE_Settings::OPTION_API_TOKEN, '' ) );
@@ -74,7 +79,7 @@ class Nexa_RE_Api_Client {
         ];
     }
 
-    /* -------- Properties endpoints -------- */
+    /* -------- Properties endpoints (read-only) -------- */
 
     public function list_properties( array $filters = [] ) {
         $path = '/properties';
@@ -116,22 +121,10 @@ class Nexa_RE_Api_Client {
         return $this->request( 'GET', '/properties/' . (int) $id );
     }
 
-    public function delete_property( $id ) {
-        return $this->request( 'DELETE', '/properties/' . (int) $id );
-    }
-
-    public function create_property( array $payload ) {
-        return $this->request( 'POST', '/properties', $payload );
-    }
-
-    public function update_property( $id, array $payload ) {
-        return $this->request( 'PUT', '/properties/' . (int) $id, $payload );
-    }
-
-    /* -------- Agency Parameters endpoints -------- */
+    /* -------- Agency Parameters endpoints (read-only) -------- */
 
     /**
-     * List all agency parameters (cities and property types).
+     * List all agency parameters (cities and property types) for filter dropdowns.
      *
      * @param string|null $type Optional filter by type ('city' or 'property_type').
      * @return array API response.
@@ -144,45 +137,37 @@ class Nexa_RE_Api_Client {
         return $this->request( 'GET', $path );
     }
 
-    /**
-     * Create a new agency parameter.
-     *
-     * @param array $payload { parameter_type, value, sort_order }.
-     * @return array API response.
-     */
-    public function create_agency_parameter( array $payload ) {
-        return $this->request( 'POST', '/agency-parameters', $payload );
-    }
+    /* -------- Shortcode Configuration -------- */
 
     /**
-     * Update an existing agency parameter.
+     * Fetch shortcode configuration from the SaaS API with caching.
      *
-     * @param int   $id      Parameter ID.
-     * @param array $payload { value, sort_order }.
-     * @return array API response.
+     * @param string $type The shortcode type (e.g., 'nexa_properties', 'nexa_property_search').
+     * @return array|null The configuration array or null if unavailable.
      */
-    public function update_agency_parameter( $id, array $payload ) {
-        return $this->request( 'PUT', '/agency-parameters/' . (int) $id, $payload );
-    }
+    public function get_shortcode_config( $type ) {
+        $cache_key = 'nexa_shortcode_config_' . sanitize_key( $type );
 
-    /**
-     * Delete an agency parameter.
-     *
-     * @param int $id Parameter ID.
-     * @return array API response.
-     */
-    public function delete_agency_parameter( $id ) {
-        return $this->request( 'DELETE', '/agency-parameters/' . (int) $id );
-    }
+        // Check transient cache
+        $cached = get_transient( $cache_key );
+        if ( false !== $cached ) {
+            return $cached;
+        }
 
-    /**
-     * Bulk replace all values for a parameter type.
-     *
-     * @param string $type   Parameter type ('city' or 'property_type').
-     * @param array  $values Array of string values.
-     * @return array API response.
-     */
-    public function bulk_update_agency_parameters( $type, array $values ) {
-        return $this->request( 'PUT', '/agency-parameters/bulk/' . rawurlencode( $type ), [ 'values' => $values ] );
+        // Fetch from API
+        $result = $this->request( 'GET', '/shortcode-configs?type=' . rawurlencode( $type ) );
+
+        if ( $result['ok'] && ! empty( $result['data'] ) ) {
+            $config = $result['data'];
+
+            // Cache the config for 5 minutes
+            set_transient( $cache_key, $config, self::CONFIG_CACHE_TTL );
+
+            return $config;
+        }
+
+        // Return null if API is unreachable or returns an error
+        // Shortcodes will use sensible defaults
+        return null;
     }
 }
