@@ -16,6 +16,8 @@ define( 'NEXA_RE_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
 /**
  * Register REST API endpoints for image management.
+ * These endpoints are used by the SaaS API to upload and delete images
+ * when properties are created or updated through the SaaS dashboard.
  */
 add_action( 'rest_api_init', 'nexa_re_register_rest_routes' );
 
@@ -64,6 +66,13 @@ function nexa_re_upload_image( WP_REST_Request $request ) {
     }
 
     $file = $files['image'];
+
+    // Validate file extension
+    $allowed_extensions = [ 'jpg', 'jpeg', 'png', 'gif', 'webp' ];
+    $file_extension = strtolower( pathinfo( $file['name'], PATHINFO_EXTENSION ) );
+    if ( ! in_array( $file_extension, $allowed_extensions, true ) ) {
+        return new WP_Error( 'invalid_extension', 'Only image files are allowed (JPG, PNG, GIF, WebP).', [ 'status' => 400 ] );
+    }
 
     // Validate MIME type - only allow images
     $allowed_types = [ 'image/jpeg', 'image/png', 'image/gif', 'image/webp' ];
@@ -129,6 +138,14 @@ function nexa_re_delete_image( WP_REST_Request $request ) {
     $url = esc_url_raw( $url );
     if ( empty( $url ) ) {
         return new WP_Error( 'invalid_url', 'Invalid URL format.', [ 'status' => 400 ] );
+    }
+
+    // Validate URL belongs to this site to prevent deletion of external images
+    $parsed_url = wp_parse_url( $url );
+    $site_url = wp_parse_url( home_url() );
+
+    if ( ! isset( $parsed_url['host'] ) || $parsed_url['host'] !== $site_url['host'] ) {
+        return new WP_Error( 'invalid_url', 'URL does not belong to this site.', [ 'status' => 400 ] );
     }
 
     // Find attachment by URL
