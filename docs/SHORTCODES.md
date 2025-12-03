@@ -6,11 +6,13 @@ This document provides comprehensive documentation for all shortcodes available 
 
 Shortcodes allow you to embed Nexa Real Estate features anywhere on your WordPress site. Simply add the shortcode to any page, post, or widget area.
 
+**Note:** Property management and shortcode configurations are now managed through the SaaS dashboard at [saas.nexapropertysuite.com](https://saas.nexapropertysuite.com).
+
 ## Available Shortcodes
 
 ### 1. Properties List - `[nexa_properties]`
 
-Displays a grid of properties with optional filtering and map view.
+Displays a grid of properties with optional filtering and map view. Configuration (layout, columns, colors, visible fields) is automatically fetched from the SaaS API and cached locally for 5 minutes.
 
 ```
 [nexa_properties]
@@ -28,6 +30,8 @@ Displays a grid of properties with optional filtering and map view.
 | `per_page` | number | `10` | Number of properties displayed per page |
 | `show_filter` | boolean | `true` | Show/hide the advanced search filter panel |
 | `show_map` | boolean | `true` | Show/hide the interactive map view |
+
+**Note:** Additional configuration options (columns, card_style, colors, visible fields) are managed through the SaaS dashboard and applied automatically.
 
 #### Examples
 
@@ -79,6 +83,8 @@ The shortcode also responds to URL parameters, allowing users to filter properti
 
 Displays a compact search bar that can be placed on any page (e.g., homepage) to allow users to quickly search for properties. When submitted, it redirects to the properties listing page with the selected filters applied.
 
+Configuration (visible filters, button text, colors) is automatically fetched from the SaaS API.
+
 ```
 [nexa_property_search]
 ```
@@ -94,6 +100,8 @@ Displays a compact search bar that can be placed on any page (e.g., homepage) to
 | `show_price` | boolean | `true` | Show/hide the price range fields |
 | `show_bedrooms` | boolean | `true` | Show/hide the bedrooms dropdown |
 | `show_bathrooms` | boolean | `true` | Show/hide the bathrooms dropdown |
+
+**Note:** Button text and colors can be configured through the SaaS dashboard.
 
 #### Examples
 
@@ -136,30 +144,17 @@ The search bar uses the same URL parameter names as the properties list shortcod
 
 ---
 
-### 3. Agency Dashboard - `[nexa_agency_dashboard]`
+## Centralized Configuration
 
-Displays a full-featured dashboard for managing properties. Only accessible to logged-in users with appropriate permissions.
+Shortcode appearance and behavior can be configured through the SaaS dashboard at [saas.nexapropertysuite.com](https://saas.nexapropertysuite.com). Configuration includes:
 
-```
-[nexa_agency_dashboard]
-```
+- **Layout options**: Number of columns, card style
+- **Color scheme**: Primary color for buttons and accents
+- **Visible fields**: Which property details to show (price, bedrooms, bathrooms, city)
+- **Filter settings**: Which filters to display
+- **Button text**: Customize search button labels
 
-#### Requirements
-
-- User must be logged in
-- User must have either:
-  - The `manage_nexa_properties` capability, OR
-  - The `manage_options` capability (WordPress administrators)
-
-#### Features
-
-- View all agency properties
-- Create new properties
-- Edit existing properties
-- Delete properties
-- Upload property images
-- Add floor plans
-- Set property locations on a map
+Configuration is cached locally for 5 minutes to reduce API calls. If the API is unreachable, sensible defaults are used.
 
 ---
 
@@ -211,3 +206,9 @@ All shortcodes include built-in responsive CSS. Classes follow the `nexa-` prefi
 1. Verify URL parameters are being passed correctly
 2. Check that property data matches filter criteria (case-sensitive)
 3. Ensure the API supports the filter parameters being used
+
+### Configuration Not Updating
+
+1. Configuration is cached for 5 minutes - wait for cache to expire
+2. Clear WordPress transients if needed
+3. Verify the SaaS dashboard configuration has been saved

@@ -15,43 +15,141 @@ define( 'NEXA_RE_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'NEXA_RE_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
 /**
- * Add capabilities on plugin activation
+ * Register REST API endpoints for image management.
  */
-register_activation_hook( __FILE__, 'nexa_re_add_capabilities' );
+add_action( 'rest_api_init', 'nexa_re_register_rest_routes' );
 
-function nexa_re_add_capabilities() {
-    // Give WP administrators the ability to access Nexa dashboard
-    $role = get_role( 'administrator' );
-    if ( $role && ! $role->has_cap( 'manage_nexa_properties' ) ) {
-        $role->add_cap( 'manage_nexa_properties' );
-    }
+function nexa_re_register_rest_routes() {
+    register_rest_route( 'nexa-plugin/v1', '/upload-image', [
+        'methods'             => 'POST',
+        'callback'            => 'nexa_re_upload_image',
+        'permission_callback' => 'nexa_re_verify_agency_token',
+    ] );
+
+    register_rest_route( 'nexa-plugin/v1', '/delete-image', [
+        'methods'             => 'DELETE',
+        'callback'            => 'nexa_re_delete_image',
+        'permission_callback' => 'nexa_re_verify_agency_token',
+    ] );
 }
 
 /**
- * Enqueue frontend assets for the Nexa agency dashboard.
+ * Verify the X-AGENCY-TOKEN header matches the configured token.
+ *
+ * @param WP_REST_Request $request The incoming request.
+ * @return bool True if token matches, false otherwise.
  */
-function nexa_re_enqueue_front_assets() {
-    if ( ! is_singular() ) {
-        return;
+function nexa_re_verify_agency_token( WP_REST_Request $request ) {
+    $token = $request->get_header( 'X-AGENCY-TOKEN' );
+    $expected_token = trim( get_option( Nexa_RE_Settings::OPTION_API_TOKEN, '' ) );
+
+    if ( empty( $expected_token ) ) {
+        return false;
     }
 
-    global $post;
-    if ( ! $post instanceof WP_Post ) {
-        return;
-    }
-
-    // Only load CSS if the page content has the dashboard shortcode
-    if ( has_shortcode( $post->post_content, 'nexa_agency_dashboard' ) ) {
-        wp_enqueue_style(
-            'nexa-re-dashboard',
-            NEXA_RE_PLUGIN_URL . 'assets/css/nexa-dashboard.css',
-            [],
-            NEXA_RE_VERSION
-        );
-    }
+    return hash_equals( $expected_token, $token );
 }
-add_action( 'wp_enqueue_scripts', 'nexa_re_enqueue_front_assets' );
 
+/**
+ * Handle image upload from the SaaS API.
+ *
+ * @param WP_REST_Request $request The incoming request.
+ * @return WP_REST_Response|WP_Error The response or error.
+ */
+function nexa_re_upload_image( WP_REST_Request $request ) {
+    $files = $request->get_file_params();
+
+    if ( empty( $files['image'] ) ) {
+        return new WP_Error( 'no_image', 'No image file provided.', [ 'status' => 400 ] );
+    }
+
+    $file = $files['image'];
+
+    // Validate MIME type - only allow images
+    $allowed_types = [ 'image/jpeg', 'image/png', 'image/gif', 'image/webp' ];
+    $finfo = new finfo( FILEINFO_MIME_TYPE );
+    $file_mime = $finfo->file( $file['tmp_name'] );
+
+    if ( ! in_array( $file_mime, $allowed_types, true ) ) {
+        return new WP_Error( 'invalid_type', 'Only image files are allowed (JPEG, PNG, GIF, WebP).', [ 'status' => 400 ] );
+    }
+
+    // Include necessary WordPress file handling functions
+    require_once ABSPATH . 'wp-admin/includes/file.php';
+    require_once ABSPATH . 'wp-admin/includes/image.php';
+    require_once ABSPATH . 'wp-admin/includes/media.php';
+
+    // Use wp_handle_upload to process the file
+    $upload_overrides = [ 'test_form' => false ];
+    $uploaded_file = wp_handle_upload( $file, $upload_overrides );
+
+    if ( isset( $uploaded_file['error'] ) ) {
+        return new WP_Error( 'upload_failed', $uploaded_file['error'], [ 'status' => 500 ] );
+    }
+
+    // Create an attachment
+    $attachment = [
+        'post_mime_type' => $uploaded_file['type'],
+        'post_title'     => sanitize_file_name( pathinfo( $uploaded_file['file'], PATHINFO_FILENAME ) ),
+        'post_content'   => '',
+        'post_status'    => 'inherit',
+    ];
+
+    $attachment_id = wp_insert_attachment( $attachment, $uploaded_file['file'] );
+
+    if ( is_wp_error( $attachment_id ) ) {
+        return new WP_Error( 'attachment_failed', 'Failed to create attachment.', [ 'status' => 500 ] );
+    }
+
+    // Generate attachment metadata
+    $attachment_metadata = wp_generate_attachment_metadata( $attachment_id, $uploaded_file['file'] );
+    wp_update_attachment_metadata( $attachment_id, $attachment_metadata );
+
+    return rest_ensure_response( [
+        'success'       => true,
+        'attachment_id' => $attachment_id,
+        'url'           => $uploaded_file['url'],
+    ] );
+}
+
+/**
+ * Handle image deletion from the SaaS API.
+ *
+ * @param WP_REST_Request $request The incoming request.
+ * @return WP_REST_Response|WP_Error The response or error.
+ */
+function nexa_re_delete_image( WP_REST_Request $request ) {
+    $url = $request->get_param( 'url' );
+
+    if ( empty( $url ) ) {
+        return new WP_Error( 'no_url', 'No image URL provided.', [ 'status' => 400 ] );
+    }
+
+    // Validate URL format
+    $url = esc_url_raw( $url );
+    if ( empty( $url ) ) {
+        return new WP_Error( 'invalid_url', 'Invalid URL format.', [ 'status' => 400 ] );
+    }
+
+    // Find attachment by URL
+    $attachment_id = attachment_url_to_postid( $url );
+
+    if ( ! $attachment_id ) {
+        return new WP_Error( 'not_found', 'Image not found.', [ 'status' => 404 ] );
+    }
+
+    // Delete the attachment and its files
+    $deleted = wp_delete_attachment( $attachment_id, true );
+
+    if ( ! $deleted ) {
+        return new WP_Error( 'delete_failed', 'Failed to delete image.', [ 'status' => 500 ] );
+    }
+
+    return rest_ensure_response( [
+        'success' => true,
+        'message' => 'Image deleted successfully.',
+    ] );
+}
 
 // Frontend styles for Nexa single Property pages.
 function nexa_re_enqueue_frontend_assets() {
