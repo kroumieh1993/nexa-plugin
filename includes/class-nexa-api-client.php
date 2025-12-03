@@ -158,7 +158,10 @@ class Nexa_RE_Api_Client {
         $result = $this->request( 'GET', '/shortcode-configs?type=' . rawurlencode( $type ) );
 
         if ( $result['ok'] && ! empty( $result['data'] ) ) {
-            $config = $result['data'];
+            $data = $result['data'];
+            
+            // The API may return config in a nested 'config' key or directly
+            $config = isset( $data['config'] ) && is_array( $data['config'] ) ? $data['config'] : $data;
 
             // Cache the config for 5 minutes
             set_transient( $cache_key, $config, self::CONFIG_CACHE_TTL );

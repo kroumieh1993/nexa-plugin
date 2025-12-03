@@ -50,22 +50,35 @@ class Nexa_RE_Shortcodes {
 
         // Apply API config
         if ( $config ) {
-            if ( isset( $config['show_city'] ) ) {
+            // Support both 'show_city' and 'show_city_filter' naming conventions
+            if ( isset( $config['show_city_filter'] ) ) {
+                $defaults['show_city'] = $config['show_city_filter'] ? 'true' : 'false';
+            } elseif ( isset( $config['show_city'] ) ) {
                 $defaults['show_city'] = $config['show_city'] ? 'true' : 'false';
             }
-            if ( isset( $config['show_category'] ) ) {
+            if ( isset( $config['show_category_filter'] ) ) {
+                $defaults['show_category'] = $config['show_category_filter'] ? 'true' : 'false';
+            } elseif ( isset( $config['show_category'] ) ) {
                 $defaults['show_category'] = $config['show_category'] ? 'true' : 'false';
             }
-            if ( isset( $config['show_type'] ) ) {
+            if ( isset( $config['show_type_filter'] ) ) {
+                $defaults['show_type'] = $config['show_type_filter'] ? 'true' : 'false';
+            } elseif ( isset( $config['show_type'] ) ) {
                 $defaults['show_type'] = $config['show_type'] ? 'true' : 'false';
             }
-            if ( isset( $config['show_price'] ) ) {
+            if ( isset( $config['show_price_filter'] ) ) {
+                $defaults['show_price'] = $config['show_price_filter'] ? 'true' : 'false';
+            } elseif ( isset( $config['show_price'] ) ) {
                 $defaults['show_price'] = $config['show_price'] ? 'true' : 'false';
             }
-            if ( isset( $config['show_bedrooms'] ) ) {
+            if ( isset( $config['show_bedrooms_filter'] ) ) {
+                $defaults['show_bedrooms'] = $config['show_bedrooms_filter'] ? 'true' : 'false';
+            } elseif ( isset( $config['show_bedrooms'] ) ) {
                 $defaults['show_bedrooms'] = $config['show_bedrooms'] ? 'true' : 'false';
             }
-            if ( isset( $config['show_bathrooms'] ) ) {
+            if ( isset( $config['show_bathrooms_filter'] ) ) {
+                $defaults['show_bathrooms'] = $config['show_bathrooms_filter'] ? 'true' : 'false';
+            } elseif ( isset( $config['show_bathrooms'] ) ) {
                 $defaults['show_bathrooms'] = $config['show_bathrooms'] ? 'true' : 'false';
             }
             if ( ! empty( $config['button_text'] ) ) {
@@ -337,21 +350,25 @@ class Nexa_RE_Shortcodes {
 
         // Default attributes
         $defaults = [
-            'city'          => '',
-            'category'      => '',
-            'property_type' => '',
-            'min_price'     => '',
-            'max_price'     => '',
-            'per_page'      => '10',
-            'show_filter'   => 'true',
-            'show_map'      => 'true',
-            'columns'       => '3',
-            'card_style'    => 'default',
-            'primary_color' => '#4f46e5',
-            'show_price'    => 'true',
-            'show_bedrooms' => 'true',
-            'show_bathrooms' => 'true',
-            'show_city'     => 'true',
+            'city'            => '',
+            'category'        => '',
+            'property_type'   => '',
+            'min_price'       => '',
+            'max_price'       => '',
+            'per_page'        => '10',
+            'show_filter'     => 'true',
+            'show_map'        => 'true',
+            'columns'         => '3',
+            'layout'          => 'grid',
+            'card_style'      => 'default',
+            'primary_color'   => '#4f46e5',
+            'secondary_color' => '#16a34a',
+            'show_price'      => 'true',
+            'show_bedrooms'   => 'true',
+            'show_bathrooms'  => 'true',
+            'show_city'       => 'true',
+            'show_area'       => 'true',
+            'show_location'   => 'true',
         ];
 
         // Apply API config
@@ -368,11 +385,17 @@ class Nexa_RE_Shortcodes {
             if ( isset( $config['columns'] ) ) {
                 $defaults['columns'] = (string) intval( $config['columns'] );
             }
+            if ( ! empty( $config['layout'] ) ) {
+                $defaults['layout'] = in_array( $config['layout'], [ 'grid', 'list' ], true ) ? $config['layout'] : 'grid';
+            }
             if ( ! empty( $config['card_style'] ) ) {
                 $defaults['card_style'] = $config['card_style'];
             }
             if ( ! empty( $config['primary_color'] ) ) {
                 $defaults['primary_color'] = $config['primary_color'];
+            }
+            if ( ! empty( $config['secondary_color'] ) ) {
+                $defaults['secondary_color'] = $config['secondary_color'];
             }
             if ( isset( $config['show_price'] ) ) {
                 $defaults['show_price'] = $config['show_price'] ? 'true' : 'false';
@@ -385,6 +408,12 @@ class Nexa_RE_Shortcodes {
             }
             if ( isset( $config['show_city'] ) ) {
                 $defaults['show_city'] = $config['show_city'] ? 'true' : 'false';
+            }
+            if ( isset( $config['show_area'] ) ) {
+                $defaults['show_area'] = $config['show_area'] ? 'true' : 'false';
+            }
+            if ( isset( $config['show_location'] ) ) {
+                $defaults['show_location'] = $config['show_location'] ? 'true' : 'false';
             }
         }
 
@@ -460,9 +489,22 @@ class Nexa_RE_Shortcodes {
         $data = $result['data'];
         $properties = $data['data'] ?? $data;
         
-        // Determine if filter form should be shown
-        $show_filter = filter_var( $atts['show_filter'], FILTER_VALIDATE_BOOLEAN );
-        $show_map    = filter_var( $atts['show_map'], FILTER_VALIDATE_BOOLEAN );
+        // Determine display options from config
+        $show_filter    = filter_var( $atts['show_filter'], FILTER_VALIDATE_BOOLEAN );
+        $show_map       = filter_var( $atts['show_map'], FILTER_VALIDATE_BOOLEAN );
+        $show_price     = filter_var( $atts['show_price'], FILTER_VALIDATE_BOOLEAN );
+        $show_bedrooms  = filter_var( $atts['show_bedrooms'], FILTER_VALIDATE_BOOLEAN );
+        $show_bathrooms = filter_var( $atts['show_bathrooms'], FILTER_VALIDATE_BOOLEAN );
+        $show_city      = filter_var( $atts['show_city'], FILTER_VALIDATE_BOOLEAN );
+        $show_area      = filter_var( $atts['show_area'], FILTER_VALIDATE_BOOLEAN );
+        $show_location  = filter_var( $atts['show_location'], FILTER_VALIDATE_BOOLEAN );
+        
+        // Layout and styling options
+        $layout          = in_array( $atts['layout'], [ 'grid', 'list' ], true ) ? $atts['layout'] : 'grid';
+        $columns         = max( 1, min( 6, intval( $atts['columns'] ) ) );
+        $card_style      = sanitize_key( $atts['card_style'] );
+        $primary_color   = sanitize_hex_color( $atts['primary_color'] ) ?: '#4f46e5';
+        $secondary_color = sanitize_hex_color( $atts['secondary_color'] ) ?: '#16a34a';
 
         // Fetch agency parameters for filter dropdowns
         $city_options          = [];
@@ -495,9 +537,17 @@ class Nexa_RE_Shortcodes {
             nexa_re_enqueue_map_assets();
         }
 
+        // Build wrapper classes
+        $wrapper_classes = [ 'nexa-properties-wrapper' ];
+        $wrapper_classes[] = 'nexa-layout-' . esc_attr( $layout );
+        $wrapper_classes[] = 'nexa-columns-' . esc_attr( $columns );
+        if ( $card_style !== 'default' ) {
+            $wrapper_classes[] = 'nexa-card-style-' . esc_attr( $card_style );
+        }
+
         ob_start();
         ?>
-        <div class="nexa-properties-wrapper">
+        <div class="<?php echo esc_attr( implode( ' ', $wrapper_classes ) ); ?>" style="--nexa-primary-color: <?php echo esc_attr( $primary_color ); ?>; --nexa-secondary-color: <?php echo esc_attr( $secondary_color ); ?>;">
             <?php if ( $show_filter ) : ?>
             <div class="nexa-filter-header">
                 <button type="button" class="nexa-advanced-search-btn" id="nexa-toggle-filter">
@@ -636,6 +686,8 @@ class Nexa_RE_Shortcodes {
                                 $price       = isset( $property['price'] ) ? $property['price'] : null;
                                 $bedrooms    = $property['bedrooms'] ?? null;
                                 $bathrooms   = $property['bathrooms'] ?? null;
+                                $area        = $property['area'] ?? null;
+                                $address     = $property['address'] ?? '';
                                 $detail_url  = self::get_property_url( $property );
                                 ?>
                                 <a class="nexa-property-card" href="<?php echo esc_url( $detail_url ); ?>" data-property-id="<?php echo esc_attr( $prop_id ); ?>">
@@ -652,20 +704,28 @@ class Nexa_RE_Shortcodes {
                                     <div class="nexa-property-body">
                                         <div class="nexa-property-top">
                                             <h3 class="nexa-property-title"><?php echo esc_html( $title ); ?></h3>
-                                            <?php if ( $price ) : ?>
+                                            <?php if ( $show_price && $price ) : ?>
                                                 <div class="nexa-property-price">
                                                     <?php echo esc_html( number_format_i18n( $price ) ); ?>
                                                 </div>
                                             <?php endif; ?>
                                         </div>
-                                        <p class="nexa-property-location"><?php echo esc_html( $city ); ?></p>
+                                        <?php if ( $show_city && $city ) : ?>
+                                            <p class="nexa-property-location"><?php echo esc_html( $city ); ?></p>
+                                        <?php endif; ?>
+                                        <?php if ( $show_location && $address ) : ?>
+                                            <p class="nexa-property-address"><?php echo esc_html( $address ); ?></p>
+                                        <?php endif; ?>
 
                                         <div class="nexa-property-meta">
-                                            <?php if ( $bedrooms ) : ?>
+                                            <?php if ( $show_bedrooms && $bedrooms ) : ?>
                                                 <span><?php echo intval( $bedrooms ); ?> Bedrooms</span>
                                             <?php endif; ?>
-                                            <?php if ( $bathrooms ) : ?>
+                                            <?php if ( $show_bathrooms && $bathrooms ) : ?>
                                                 <span><?php echo intval( $bathrooms ); ?> Bathrooms</span>
+                                            <?php endif; ?>
+                                            <?php if ( $show_area && $area ) : ?>
+                                                <span><?php echo esc_html( $area ); ?> sqm</span>
                                             <?php endif; ?>
                                         </div>
 
@@ -791,6 +851,8 @@ class Nexa_RE_Shortcodes {
                         $price       = isset( $property['price'] ) ? $property['price'] : null;
                         $bedrooms    = $property['bedrooms'] ?? null;
                         $bathrooms   = $property['bathrooms'] ?? null;
+                        $area        = $property['area'] ?? null;
+                        $address     = $property['address'] ?? '';
                         $detail_url  = self::get_property_url( $property );
                         ?>
                         <a class="nexa-property-card" href="<?php echo esc_url( $detail_url ); ?>">
@@ -807,20 +869,28 @@ class Nexa_RE_Shortcodes {
                             <div class="nexa-property-body">
                                 <div class="nexa-property-top">
                                     <h3 class="nexa-property-title"><?php echo esc_html( $title ); ?></h3>
-                                    <?php if ( $price ) : ?>
+                                    <?php if ( $show_price && $price ) : ?>
                                         <div class="nexa-property-price">
                                             <?php echo esc_html( number_format_i18n( $price ) ); ?>
                                         </div>
                                     <?php endif; ?>
                                 </div>
-                                <p class="nexa-property-location"><?php echo esc_html( $city ); ?></p>
+                                <?php if ( $show_city && $city ) : ?>
+                                    <p class="nexa-property-location"><?php echo esc_html( $city ); ?></p>
+                                <?php endif; ?>
+                                <?php if ( $show_location && $address ) : ?>
+                                    <p class="nexa-property-address"><?php echo esc_html( $address ); ?></p>
+                                <?php endif; ?>
 
                                 <div class="nexa-property-meta">
-                                    <?php if ( $bedrooms ) : ?>
+                                    <?php if ( $show_bedrooms && $bedrooms ) : ?>
                                         <span><?php echo intval( $bedrooms ); ?> Bedrooms</span>
                                     <?php endif; ?>
-                                    <?php if ( $bathrooms ) : ?>
+                                    <?php if ( $show_bathrooms && $bathrooms ) : ?>
                                         <span><?php echo intval( $bathrooms ); ?> Bathrooms</span>
+                                    <?php endif; ?>
+                                    <?php if ( $show_area && $area ) : ?>
+                                        <span><?php echo esc_html( $area ); ?> sqm</span>
                                     <?php endif; ?>
                                 </div>
 
@@ -940,7 +1010,7 @@ class Nexa_RE_Shortcodes {
             }
             .nexa-property-price {
                 font-weight: 700;
-                color: #16a34a;
+                color: var(--nexa-secondary-color, #16a34a);
                 font-size: 16px;
                 white-space: nowrap;
             }
@@ -950,7 +1020,7 @@ class Nexa_RE_Shortcodes {
                 gap: 6px;
                 font-size: 12px;
                 font-weight: 600;
-                color: #4f46e5;
+                color: var(--nexa-primary-color, #4f46e5);
                 margin-top: 4px;
             }
             .nexa-property-view-btn::after {
@@ -961,10 +1031,67 @@ class Nexa_RE_Shortcodes {
             .nexa-property-card:hover .nexa-property-view-btn::after {
                 transform: translateX(3px);
             }
+            .nexa-property-address {
+                font-size: 11px;
+                color: #94a3b8;
+                margin: 0;
+            }
 
             @media (max-width: 640px) {
                 .nexa-properties-grid {
                     grid-template-columns: 1fr;
+                }
+            }
+            
+            /* Layout variants */
+            .nexa-layout-list .nexa-properties-grid {
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
+            }
+            .nexa-layout-list .nexa-property-card {
+                flex-direction: row;
+                max-width: 100%;
+            }
+            .nexa-layout-list .nexa-property-image {
+                width: 280px;
+                flex-shrink: 0;
+                padding-top: 0;
+                height: 180px;
+            }
+            .nexa-layout-list .nexa-property-body {
+                flex: 1;
+                justify-content: center;
+            }
+            
+            /* Column variants */
+            .nexa-columns-1 .nexa-properties-grid { grid-template-columns: 1fr; }
+            .nexa-columns-2 .nexa-properties-grid { grid-template-columns: repeat(2, 1fr); }
+            .nexa-columns-3 .nexa-properties-grid { grid-template-columns: repeat(3, 1fr); }
+            .nexa-columns-4 .nexa-properties-grid { grid-template-columns: repeat(4, 1fr); }
+            .nexa-columns-5 .nexa-properties-grid { grid-template-columns: repeat(5, 1fr); }
+            .nexa-columns-6 .nexa-properties-grid { grid-template-columns: repeat(6, 1fr); }
+            
+            @media (max-width: 1200px) {
+                .nexa-columns-5 .nexa-properties-grid,
+                .nexa-columns-6 .nexa-properties-grid { grid-template-columns: repeat(4, 1fr); }
+            }
+            @media (max-width: 992px) {
+                .nexa-columns-4 .nexa-properties-grid,
+                .nexa-columns-5 .nexa-properties-grid,
+                .nexa-columns-6 .nexa-properties-grid { grid-template-columns: repeat(3, 1fr); }
+            }
+            @media (max-width: 768px) {
+                .nexa-columns-3 .nexa-properties-grid,
+                .nexa-columns-4 .nexa-properties-grid,
+                .nexa-columns-5 .nexa-properties-grid,
+                .nexa-columns-6 .nexa-properties-grid { grid-template-columns: repeat(2, 1fr); }
+                .nexa-layout-list .nexa-property-card {
+                    flex-direction: column;
+                }
+                .nexa-layout-list .nexa-property-image {
+                    width: 100%;
+                    height: 200px;
                 }
             }
             
@@ -993,8 +1120,8 @@ class Nexa_RE_Shortcodes {
                 border-color: #9ca3af;
             }
             .nexa-advanced-search-btn.nexa-filter-open {
-                background: #4f46e5;
-                border-color: #4f46e5;
+                background: var(--nexa-primary-color, #4f46e5);
+                border-color: var(--nexa-primary-color, #4f46e5);
                 color: #ffffff;
             }
             .nexa-search-icon {
@@ -1079,11 +1206,11 @@ class Nexa_RE_Shortcodes {
                 border: none;
             }
             .nexa-filter-btn-primary {
-                background: #4f46e5;
+                background: var(--nexa-primary-color, #4f46e5);
                 color: #ffffff;
             }
             .nexa-filter-btn-primary:hover {
-                background: #4338ca;
+                filter: brightness(0.9);
             }
             .nexa-filter-btn-secondary {
                 background: #ffffff;
