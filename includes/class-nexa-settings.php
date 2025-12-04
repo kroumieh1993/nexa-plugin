@@ -9,12 +9,18 @@ class Nexa_RE_Settings {
     // Fixed API base URL for all agencies
     const API_BASE_URL           = 'https://saas.nexapropertysuite.com/api';
     const OPTION_API_TOKEN       = 'nexa_re_api_token';
+    const OPTION_MEDIA_TOKEN     = 'nexa_re_media_token';
     const OPTION_MAP_PROVIDER    = 'nexa_re_map_provider';
     const OPTION_GOOGLE_MAPS_KEY = 'nexa_re_google_maps_key';
 
     public static function register_settings() {
 
         register_setting( 'nexa_re_settings', self::OPTION_API_TOKEN, [
+            'type'              => 'string',
+            'sanitize_callback' => 'sanitize_text_field',
+        ] );
+
+        register_setting( 'nexa_re_settings', self::OPTION_MEDIA_TOKEN, [
             'type'              => 'string',
             'sanitize_callback' => 'sanitize_text_field',
         ] );
@@ -41,6 +47,14 @@ class Nexa_RE_Settings {
             self::OPTION_API_TOKEN,
             'Agency API Token',
             [ __CLASS__, 'field_api_token' ],
+            'nexa_re_settings',
+            'nexa_re_main'
+        );
+
+        add_settings_field(
+            self::OPTION_MEDIA_TOKEN,
+            'Media Upload Token',
+            [ __CLASS__, 'field_media_token' ],
             'nexa_re_settings',
             'nexa_re_main'
         );
@@ -96,6 +110,41 @@ class Nexa_RE_Settings {
         echo '<input type="text" name="' . esc_attr( self::OPTION_API_TOKEN ) . '" value="' . $value . '" class="regular-text" />';
         echo '<p class="description">Paste the API token provided by Nexa Property Suite for this agency.</p>';
         echo '<p class="description"><strong>API URL:</strong> ' . esc_html( self::API_BASE_URL ) . '</p>';
+    }
+
+    public static function field_media_token() {
+        $value = get_option( self::OPTION_MEDIA_TOKEN, '' );
+        ?>
+        <div class="nexa-media-token-wrapper">
+            <input type="text" name="<?php echo esc_attr( self::OPTION_MEDIA_TOKEN ); ?>" value="<?php echo esc_attr( $value ); ?>" class="regular-text" id="nexa_media_token_field" />
+            <button type="button" class="button" id="nexa_generate_token_btn">Generate Token</button>
+        </div>
+        <p class="description">This token is used for the media upload API endpoint. Use the <strong>X-WP-MEDIA-TOKEN</strong> header when uploading media.</p>
+        <p class="description"><strong>Endpoint:</strong> POST <?php echo esc_html( home_url( '/wp-json/nexa-plugin/v1/upload-media' ) ); ?></p>
+        <script>
+        (function() {
+            var generateBtn = document.getElementById('nexa_generate_token_btn');
+            var tokenField = document.getElementById('nexa_media_token_field');
+            if (generateBtn && tokenField) {
+                generateBtn.addEventListener('click', function() {
+                    var array = new Uint8Array(32);
+                    window.crypto.getRandomValues(array);
+                    var token = Array.from(array, function(byte) {
+                        return ('0' + byte.toString(16)).slice(-2);
+                    }).join('');
+                    tokenField.value = token;
+                });
+            }
+        })();
+        </script>
+        <style>
+            .nexa-media-token-wrapper {
+                display: flex;
+                gap: 10px;
+                align-items: center;
+            }
+        </style>
+        <?php
     }
 
     public static function render_settings_page() {
