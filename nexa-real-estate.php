@@ -215,8 +215,19 @@ function nexa_re_upload_media( WP_REST_Request $request ) {
 
     // Validate MIME type - only allow images
     $allowed_types = [ 'image/jpeg', 'image/png', 'image/gif', 'image/webp' ];
+    
+    // Check if fileinfo extension is available
+    if ( ! class_exists( 'finfo' ) ) {
+        return new WP_Error( 'server_error', 'File validation unavailable. Please contact the administrator.', [ 'status' => 500 ] );
+    }
+    
     $finfo = new finfo( FILEINFO_MIME_TYPE );
     $file_mime = $finfo->file( $file['tmp_name'] );
+    
+    // Validate that finfo returned a valid MIME type
+    if ( false === $file_mime ) {
+        return new WP_Error( 'invalid_file', 'Could not determine file type.', [ 'status' => 400 ] );
+    }
 
     if ( ! in_array( $file_mime, $allowed_types, true ) ) {
         return new WP_Error( 'invalid_type', 'Only image files are allowed (JPEG, PNG, GIF, WebP).', [ 'status' => 400 ] );
