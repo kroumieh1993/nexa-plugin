@@ -127,11 +127,20 @@ class Nexa_RE_Settings {
             var tokenField = document.getElementById('nexa_media_token_field');
             if (generateBtn && tokenField) {
                 generateBtn.addEventListener('click', function() {
-                    var array = new Uint8Array(32);
-                    window.crypto.getRandomValues(array);
-                    var token = Array.from(array, function(byte) {
-                        return ('0' + byte.toString(16)).slice(-2);
-                    }).join('');
+                    var token = '';
+                    if (window.crypto && window.crypto.getRandomValues) {
+                        var array = new Uint8Array(32);
+                        window.crypto.getRandomValues(array);
+                        token = Array.from(array, function(byte) {
+                            return ('0' + byte.toString(16)).slice(-2);
+                        }).join('');
+                    } else {
+                        // Fallback for older browsers without Web Crypto API
+                        var chars = 'abcdef0123456789';
+                        for (var i = 0; i < 64; i++) {
+                            token += chars.charAt(Math.floor(Math.random() * chars.length));
+                        }
+                    }
                     tokenField.value = token;
                 });
             }
