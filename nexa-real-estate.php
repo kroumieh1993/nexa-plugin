@@ -33,6 +33,12 @@ function nexa_re_register_rest_routes() {
         'callback'            => 'nexa_re_delete_image',
         'permission_callback' => 'nexa_re_verify_agency_token',
     ] );
+
+    register_rest_route( 'nexa-plugin/v1', '/upload-media', [
+        'methods'             => 'POST',
+        'callback'            => 'nexa_re_upload_media',
+        'permission_callback' => 'nexa_re_verify_media_token',
+    ] );
 }
 
 /**
@@ -44,6 +50,23 @@ function nexa_re_register_rest_routes() {
 function nexa_re_verify_agency_token( WP_REST_Request $request ) {
     $token = $request->get_header( 'X-AGENCY-TOKEN' );
     $expected_token = trim( get_option( Nexa_RE_Settings::OPTION_API_TOKEN, '' ) );
+
+    if ( empty( $expected_token ) ) {
+        return false;
+    }
+
+    return hash_equals( $expected_token, $token );
+}
+
+/**
+ * Verify the X-WP-MEDIA-TOKEN header matches the configured media token.
+ *
+ * @param WP_REST_Request $request The incoming request.
+ * @return bool True if token matches, false otherwise.
+ */
+function nexa_re_verify_media_token( WP_REST_Request $request ) {
+    $token = $request->get_header( 'X-WP-MEDIA-TOKEN' );
+    $expected_token = trim( get_option( Nexa_RE_Settings::OPTION_MEDIA_TOKEN, '' ) );
 
     if ( empty( $expected_token ) ) {
         return false;
@@ -165,6 +188,75 @@ function nexa_re_delete_image( WP_REST_Request $request ) {
     return rest_ensure_response( [
         'success' => true,
         'message' => 'Image deleted successfully.',
+    ] );
+}
+
+/**
+ * Handle media upload from external API via X-WP-MEDIA-TOKEN authentication.
+ *
+ * @param WP_REST_Request $request The incoming request.
+ * @return WP_REST_Response|WP_Error The response or error.
+ */
+function nexa_re_upload_media( WP_REST_Request $request ) {
+    $files = $request->get_file_params();
+
+    if ( empty( $files['file'] ) ) {
+        return new WP_Error( 'no_file', 'No file provided.', [ 'status' => 400 ] );
+    }
+
+    $file = $files['file'];
+
+    // Validate file extension
+    $allowed_extensions = [ 'jpg', 'jpeg', 'png', 'gif', 'webp' ];
+    $file_extension = strtolower( pathinfo( $file['name'], PATHINFO_EXTENSION ) );
+    if ( ! in_array( $file_extension, $allowed_extensions, true ) ) {
+        return new WP_Error( 'invalid_extension', 'Only image files are allowed (JPG, PNG, GIF, WebP).', [ 'status' => 400 ] );
+    }
+
+    // Validate MIME type - only allow images
+    $allowed_types = [ 'image/jpeg', 'image/png', 'image/gif', 'image/webp' ];
+    $finfo = new finfo( FILEINFO_MIME_TYPE );
+    $file_mime = $finfo->file( $file['tmp_name'] );
+
+    if ( ! in_array( $file_mime, $allowed_types, true ) ) {
+        return new WP_Error( 'invalid_type', 'Only image files are allowed (JPEG, PNG, GIF, WebP).', [ 'status' => 400 ] );
+    }
+
+    // Include necessary WordPress file handling functions
+    require_once ABSPATH . 'wp-admin/includes/file.php';
+    require_once ABSPATH . 'wp-admin/includes/image.php';
+    require_once ABSPATH . 'wp-admin/includes/media.php';
+
+    // Use wp_handle_upload to process the file
+    $upload_overrides = [ 'test_form' => false ];
+    $uploaded_file = wp_handle_upload( $file, $upload_overrides );
+
+    if ( isset( $uploaded_file['error'] ) ) {
+        return new WP_Error( 'upload_failed', $uploaded_file['error'], [ 'status' => 500 ] );
+    }
+
+    // Create an attachment
+    $attachment = [
+        'post_mime_type' => $uploaded_file['type'],
+        'post_title'     => sanitize_file_name( pathinfo( $uploaded_file['file'], PATHINFO_FILENAME ) ),
+        'post_content'   => '',
+        'post_status'    => 'inherit',
+    ];
+
+    $attachment_id = wp_insert_attachment( $attachment, $uploaded_file['file'] );
+
+    if ( is_wp_error( $attachment_id ) ) {
+        return new WP_Error( 'attachment_failed', 'Failed to create attachment.', [ 'status' => 500 ] );
+    }
+
+    // Generate attachment metadata
+    $attachment_metadata = wp_generate_attachment_metadata( $attachment_id, $uploaded_file['file'] );
+    wp_update_attachment_metadata( $attachment_id, $attachment_metadata );
+
+    return rest_ensure_response( [
+        'success'       => true,
+        'attachment_id' => $attachment_id,
+        'url'           => $uploaded_file['url'],
     ] );
 }
 

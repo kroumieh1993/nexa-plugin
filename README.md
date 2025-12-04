@@ -96,6 +96,26 @@ Uploads an image to the WordPress media library.
 }
 ```
 
+### Upload Media
+`POST /wp-json/nexa-plugin/v1/upload-media`
+
+Uploads an image to the WordPress media library using a separate media token for authentication.
+
+**Headers:**
+- `X-WP-MEDIA-TOKEN` - Your media upload token (required, generate in Settings → Nexa Real Estate)
+
+**Body:**
+- `file` - The image file (multipart/form-data)
+
+**Response:**
+```json
+{
+  "success": true,
+  "attachment_id": 123,
+  "url": "https://example.com/wp-content/uploads/2024/01/image.jpg"
+}
+```
+
 ### Delete Image
 `DELETE /wp-json/nexa-plugin/v1/delete-image`
 
