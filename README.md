@@ -99,13 +99,13 @@ Uploads an image to the WordPress media library.
 ### Upload Media
 `POST /wp-json/nexa-plugin/v1/upload-media`
 
-Uploads an image to the WordPress media library using a separate media token for authentication.
+Uploads an image or PDF file to the WordPress media library using a separate media token for authentication.
 
 **Headers:**
 - `X-WP-MEDIA-TOKEN` - Your media upload token (required, generate in Settings → Nexa Real Estate)
 
 **Body:**
-- `file` - The image file (multipart/form-data)
+- `file` - The file to upload (multipart/form-data). Supported formats: JPG, PNG, GIF, WebP, PDF
 
 **Response:**
 ```json
