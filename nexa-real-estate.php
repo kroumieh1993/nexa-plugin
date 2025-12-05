@@ -207,14 +207,14 @@ function nexa_re_upload_media( WP_REST_Request $request ) {
     $file = $files['file'];
 
     // Validate file extension
-    $allowed_extensions = [ 'jpg', 'jpeg', 'png', 'gif', 'webp' ];
+    $allowed_extensions = [ 'jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf' ];
     $file_extension = strtolower( pathinfo( $file['name'], PATHINFO_EXTENSION ) );
     if ( ! in_array( $file_extension, $allowed_extensions, true ) ) {
-        return new WP_Error( 'invalid_extension', 'Only image files are allowed (JPG, PNG, GIF, WebP).', [ 'status' => 400 ] );
+        return new WP_Error( 'invalid_extension', 'Only image files (JPG, PNG, GIF, WebP) and PDF are allowed.', [ 'status' => 400 ] );
     }
 
-    // Validate MIME type - only allow images
-    $allowed_types = [ 'image/jpeg', 'image/png', 'image/gif', 'image/webp' ];
+    // Validate MIME type - allow images and PDF
+    $allowed_types = [ 'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf' ];
     
     // Check if fileinfo extension is available
     if ( ! class_exists( 'finfo' ) ) {
@@ -230,7 +230,7 @@ function nexa_re_upload_media( WP_REST_Request $request ) {
     }
 
     if ( ! in_array( $file_mime, $allowed_types, true ) ) {
-        return new WP_Error( 'invalid_type', 'Only image files are allowed (JPEG, PNG, GIF, WebP).', [ 'status' => 400 ] );
+        return new WP_Error( 'invalid_type', 'Only image files (JPEG, PNG, GIF, WebP) and PDF are allowed.', [ 'status' => 400 ] );
     }
 
     // Include necessary WordPress file handling functions
