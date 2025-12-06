@@ -1,0 +1,1679 @@
+/**
+ * Nexa Real Estate - Property Card Layout Styles
+ * Styles for different property card layouts.
+ */
+
+/* ==========================================================================
+   Modern Card Layout
+   ========================================================================== */
+
+.nexa-card-modern {
+    border-radius: 16px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.nexa-card-modern:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+.nexa-card-modern .nexa-property-image-wrapper {
+    position: relative;
+    height: 220px;
+    overflow: hidden;
+}
+
+.nexa-card-modern .nexa-property-image-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.nexa-card-modern:hover .nexa-property-image-wrapper img {
+    transform: scale(1.05);
+}
+
+.nexa-card-modern .nexa-modern-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 20px;
+    background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.nexa-card-modern .nexa-modern-category {
+    background: var(--nexa-primary-color, #4f46e5);
+    color: #fff;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.nexa-card-modern .nexa-modern-price {
+    color: #fff;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.nexa-card-modern .nexa-modern-content {
+    padding: 16px 20px;
+}
+
+.nexa-card-modern .nexa-modern-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 8px;
+}
+
+.nexa-card-modern .nexa-modern-location {
+    font-size: 13px;
+    color: #64748b;
+    margin: 0 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.nexa-card-modern .nexa-modern-features {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.nexa-card-modern .nexa-modern-feature {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #475569;
+}
+
+.nexa-card-modern .nexa-icon {
+    font-size: 14px;
+}
+
+/* ==========================================================================
+   Elegant Card Layout
+   ========================================================================== */
+
+.nexa-card-elegant {
+    border-radius: 12px;
+    overflow: hidden;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
+}
+
+.nexa-card-elegant:hover {
+    border-color: var(--nexa-primary-color, #4f46e5);
+    box-shadow: 0 8px 30px rgba(79, 70, 229, 0.12);
+}
+
+.nexa-card-elegant .nexa-elegant-image {
+    height: 200px;
+    position: relative;
+    overflow: hidden;
+}
+
+.nexa-card-elegant .nexa-elegant-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.nexa-card-elegant .nexa-elegant-body {
+    padding: 20px;
+}
+
+.nexa-card-elegant .nexa-elegant-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.nexa-card-elegant .nexa-elegant-badge {
+    background: #f1f5f9;
+    color: #475569;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.nexa-card-elegant .nexa-elegant-price {
+    color: var(--nexa-secondary-color, #16a34a);
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.nexa-card-elegant .nexa-elegant-title {
+    font-size: 17px;
+    font-weight: 600;
+    color: #0f172a;
+    margin: 0 0 6px;
+    line-height: 1.4;
+}
+
+.nexa-card-elegant .nexa-elegant-location {
+    font-size: 13px;
+    color: #64748b;
+    margin: 0 0 4px;
+}
+
+.nexa-card-elegant .nexa-elegant-address {
+    font-size: 12px;
+    color: #94a3b8;
+    margin: 0;
+}
+
+.nexa-card-elegant .nexa-elegant-divider {
+    height: 1px;
+    background: #e2e8f0;
+    margin: 16px 0;
+}
+
+.nexa-card-elegant .nexa-elegant-stats {
+    display: flex;
+    gap: 20px;
+}
+
+.nexa-card-elegant .nexa-elegant-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.nexa-card-elegant .nexa-elegant-stat-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.nexa-card-elegant .nexa-elegant-stat-label {
+    font-size: 11px;
+    color: #94a3b8;
+    text-transform: uppercase;
+}
+
+/* ==========================================================================
+   Compact Card Layout
+   ========================================================================== */
+
+.nexa-card-compact {
+    display: flex;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+    transition: box-shadow 0.2s ease;
+}
+
+.nexa-card-compact:hover {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.nexa-card-compact .nexa-compact-image {
+    width: 120px;
+    flex-shrink: 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.nexa-card-compact .nexa-compact-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.nexa-card-compact .nexa-compact-badge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background: var(--nexa-primary-color, #4f46e5);
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.nexa-card-compact .nexa-compact-content {
+    flex: 1;
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.nexa-card-compact .nexa-compact-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #0f172a;
+    margin: 0 0 4px;
+    line-height: 1.3;
+}
+
+.nexa-card-compact .nexa-compact-location {
+    font-size: 12px;
+    color: #64748b;
+    margin: 0;
+}
+
+.nexa-card-compact .nexa-compact-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto;
+    padding-top: 8px;
+}
+
+.nexa-card-compact .nexa-compact-specs {
+    display: flex;
+    gap: 8px;
+    font-size: 11px;
+    color: #64748b;
+}
+
+.nexa-card-compact .nexa-compact-specs span {
+    background: #f8fafc;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.nexa-card-compact .nexa-compact-price {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--nexa-secondary-color, #16a34a);
+}
+
+/* ==========================================================================
+   Minimal Card Layout
+   ========================================================================== */
+
+.nexa-card-minimal {
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fff;
+    border: 1px solid #f1f5f9;
+    transition: border-color 0.2s ease;
+}
+
+.nexa-card-minimal:hover {
+    border-color: #e2e8f0;
+}
+
+.nexa-card-minimal .nexa-minimal-image {
+    height: 180px;
+    position: relative;
+}
+
+.nexa-card-minimal .nexa-minimal-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.nexa-card-minimal .nexa-minimal-content {
+    padding: 16px;
+}
+
+.nexa-card-minimal .nexa-minimal-main {
+    margin-bottom: 12px;
+}
+
+.nexa-card-minimal .nexa-minimal-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #0f172a;
+    margin: 0 0 4px;
+}
+
+.nexa-card-minimal .nexa-minimal-location {
+    font-size: 13px;
+    color: #64748b;
+    margin: 0;
+}
+
+.nexa-card-minimal .nexa-minimal-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nexa-card-minimal .nexa-minimal-price {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--nexa-secondary-color, #16a34a);
+}
+
+.nexa-card-minimal .nexa-minimal-specs {
+    display: flex;
+    gap: 12px;
+    font-size: 12px;
+    color: #64748b;
+}
+
+.nexa-card-minimal .nexa-minimal-specs span::before {
+    content: "•";
+    margin-right: 5px;
+    color: #cbd5e1;
+}
+
+/* ==========================================================================
+   Bold Card Layout
+   ========================================================================== */
+
+.nexa-card-bold {
+    border-radius: 20px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    transition: transform 0.3s ease;
+}
+
+.nexa-card-bold:hover {
+    transform: scale(1.02);
+}
+
+.nexa-card-bold .nexa-bold-image-container {
+    position: relative;
+    height: 240px;
+    overflow: hidden;
+}
+
+.nexa-card-bold .nexa-bold-image-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.nexa-card-bold .nexa-bold-gradient {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 50%, transparent 100%);
+}
+
+.nexa-card-bold .nexa-bold-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 20px;
+    color: #fff;
+}
+
+.nexa-card-bold .nexa-bold-category {
+    display: inline-block;
+    background: var(--nexa-primary-color, #4f46e5);
+    padding: 6px 14px;
+    border-radius: 30px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+}
+
+.nexa-card-bold .nexa-bold-title {
+    font-size: 22px;
+    font-weight: 800;
+    margin: 0 0 6px;
+    line-height: 1.2;
+}
+
+.nexa-card-bold .nexa-bold-location {
+    font-size: 13px;
+    opacity: 0.9;
+    margin: 0;
+}
+
+.nexa-card-bold .nexa-bold-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: #f8fafc;
+}
+
+.nexa-card-bold .nexa-bold-features {
+    display: flex;
+    gap: 20px;
+}
+
+.nexa-card-bold .nexa-bold-feature {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.nexa-card-bold .nexa-bold-feature-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.nexa-card-bold .nexa-bold-feature-label {
+    font-size: 10px;
+    color: #64748b;
+    text-transform: uppercase;
+}
+
+.nexa-card-bold .nexa-bold-price {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--nexa-secondary-color, #16a34a);
+}
+
+/* ==========================================================================
+   Default Card Layout (inherits base styles)
+   ========================================================================== */
+
+.nexa-card-default {
+    /* Uses the base .nexa-property-card styles from shortcodes */
+}
+
+/* ==========================================================================
+   Responsive Adjustments
+   ========================================================================== */
+
+@media (max-width: 768px) {
+    .nexa-card-compact {
+        flex-direction: column;
+    }
+    
+    .nexa-card-compact .nexa-compact-image {
+        width: 100%;
+        height: 160px;
+    }
+    
+    .nexa-card-bold .nexa-bold-footer {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .nexa-card-bold .nexa-bold-features {
+        width: 100%;
+        justify-content: space-around;
+    }
+}
+
+/* ==========================================================================
+   Single Property Layout Styles
+   ========================================================================== */
+
+/* Modern Single Property */
+.nexa-modern-single {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.nexa-modern-hero {
+    position: relative;
+    height: 500px;
+    margin-bottom: 0;
+}
+
+.nexa-modern-hero-gallery {
+    position: relative;
+    height: 100%;
+}
+
+.nexa-modern-hero-slide {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.nexa-modern-hero-slide.is-active {
+    opacity: 1;
+}
+
+.nexa-modern-gallery-nav {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 8px 16px;
+    border-radius: 30px;
+}
+
+.nexa-modern-nav-btn {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px 8px;
+    color: #0f172a;
+}
+
+.nexa-modern-counter {
+    font-size: 13px;
+    color: #64748b;
+}
+
+.nexa-modern-info-card {
+    position: absolute;
+    bottom: 40px;
+    left: 40px;
+    background: #fff;
+    padding: 24px;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    max-width: 400px;
+}
+
+.nexa-modern-badge {
+    display: inline-block;
+    background: var(--nexa-primary-color, #4f46e5);
+    color: #fff;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+}
+
+.nexa-modern-title {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0 0 8px;
+    color: #0f172a;
+}
+
+.nexa-modern-location {
+    font-size: 14px;
+    color: #64748b;
+    margin: 0 0 16px;
+}
+
+.nexa-modern-price-tag {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--nexa-secondary-color, #16a34a);
+}
+
+.nexa-modern-stats-bar {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    padding: 24px 40px;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.nexa-modern-stat {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.nexa-modern-stat-icon {
+    font-size: 24px;
+}
+
+.nexa-modern-stat-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.nexa-modern-stat-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.nexa-modern-stat-label {
+    font-size: 12px;
+    color: #64748b;
+}
+
+.nexa-modern-content {
+    display: grid;
+    grid-template-columns: 1fr 350px;
+    gap: 40px;
+    padding: 40px;
+}
+
+.nexa-modern-main {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+.nexa-modern-section h2 {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0 0 16px;
+    color: #0f172a;
+}
+
+.nexa-modern-description {
+    color: #475569;
+    line-height: 1.7;
+}
+
+.nexa-modern-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.nexa-modern-details-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+.nexa-modern-details-card h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 16px;
+}
+
+.nexa-modern-details-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.nexa-modern-details-list li {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 14px;
+}
+
+.nexa-modern-details-list li:last-child {
+    border-bottom: none;
+}
+
+.nexa-modern-details-list li span:first-child {
+    color: #64748b;
+}
+
+.nexa-modern-details-list li span:last-child {
+    color: #0f172a;
+    font-weight: 500;
+}
+
+.nexa-modern-floor-plans {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.nexa-modern-floor-plan {
+    display: block;
+    padding: 10px 12px;
+    background: #f8fafc;
+    border-radius: 6px;
+    color: var(--nexa-primary-color, #4f46e5);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.nexa-modern-floor-plan:hover {
+    background: #f1f5f9;
+}
+
+/* Elegant Single Property */
+.nexa-elegant-single {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.nexa-elegant-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 32px 0;
+    border-bottom: 1px solid #e2e8f0;
+    margin-bottom: 32px;
+}
+
+.nexa-elegant-breadcrumb {
+    font-size: 12px;
+    color: var(--nexa-primary-color, #4f46e5);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.nexa-elegant-separator {
+    margin: 0 8px;
+    color: #cbd5e1;
+}
+
+.nexa-elegant-title {
+    font-size: 32px;
+    font-weight: 700;
+    margin: 0 0 8px;
+    color: #0f172a;
+}
+
+.nexa-elegant-location {
+    font-size: 15px;
+    color: #64748b;
+    margin: 0;
+}
+
+.nexa-elegant-price-wrapper {
+    text-align: right;
+}
+
+.nexa-elegant-price-label {
+    display: block;
+    font-size: 12px;
+    color: #94a3b8;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.nexa-elegant-price {
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--nexa-secondary-color, #16a34a);
+}
+
+.nexa-elegant-gallery {
+    margin-bottom: 32px;
+}
+
+.nexa-elegant-gallery-main {
+    position: relative;
+    height: 450px;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+
+.nexa-elegant-gallery-main img.nexa-gallery-slide {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.nexa-elegant-gallery-main img.is-active {
+    opacity: 1;
+}
+
+.nexa-elegant-gallery-controls {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    transform: translateY(-50%);
+    display: flex;
+    justify-content: space-between;
+    padding: 0 16px;
+}
+
+.nexa-elegant-gallery-controls button {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.95);
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.nexa-elegant-thumbnails {
+    display: flex;
+    gap: 8px;
+}
+
+.nexa-elegant-thumbnails img {
+    width: 80px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 6px;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+.nexa-elegant-thumbnails img.is-active {
+    opacity: 1;
+    outline: 2px solid var(--nexa-primary-color, #4f46e5);
+}
+
+.nexa-elegant-more {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    height: 60px;
+    background: #f1f5f9;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #64748b;
+}
+
+.nexa-elegant-features {
+    display: flex;
+    gap: 32px;
+    padding: 24px 0;
+    border-bottom: 1px solid #e2e8f0;
+    margin-bottom: 32px;
+}
+
+.nexa-elegant-feature {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.nexa-elegant-feature-number {
+    font-size: 28px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.nexa-elegant-feature-text {
+    font-size: 13px;
+    color: #64748b;
+}
+
+.nexa-elegant-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    margin-bottom: 32px;
+}
+
+.nexa-elegant-description-section h2,
+.nexa-elegant-info-section h2 {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 16px;
+    color: #0f172a;
+}
+
+.nexa-elegant-description {
+    color: #475569;
+    line-height: 1.8;
+}
+
+.nexa-elegant-info-list {
+    margin: 0;
+}
+
+.nexa-elegant-info-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.nexa-elegant-info-item dt {
+    color: #64748b;
+    font-size: 14px;
+}
+
+.nexa-elegant-info-item dd {
+    color: #0f172a;
+    font-weight: 500;
+    font-size: 14px;
+    margin: 0;
+}
+
+.nexa-elegant-map-section {
+    margin-top: 32px;
+}
+
+.nexa-elegant-map-section h2 {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 12px;
+}
+
+.nexa-elegant-address {
+    font-size: 14px;
+    color: #64748b;
+    margin: 0 0 16px;
+}
+
+.nexa-elegant-floor-plans {
+    margin-top: 32px;
+}
+
+.nexa-elegant-floor-plans h2 {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 16px;
+}
+
+.nexa-elegant-floor-plans-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 12px;
+}
+
+.nexa-elegant-floor-plan-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: #f8fafc;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #0f172a;
+    transition: background 0.2s;
+}
+
+.nexa-elegant-floor-plan-link:hover {
+    background: #f1f5f9;
+}
+
+.nexa-elegant-floor-plan-icon {
+    font-size: 20px;
+}
+
+.nexa-elegant-floor-plan-name {
+    flex: 1;
+    font-weight: 500;
+}
+
+.nexa-elegant-floor-plan-action {
+    color: var(--nexa-primary-color, #4f46e5);
+    font-size: 13px;
+}
+
+/* Compact Single Property */
+.nexa-compact-single {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.nexa-compact-top {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 20px;
+}
+
+.nexa-compact-gallery {
+    position: relative;
+    height: 300px;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.nexa-compact-gallery img.nexa-gallery-slide {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.nexa-compact-gallery img.is-active {
+    opacity: 1;
+}
+
+.nexa-compact-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.nexa-compact-nav-prev {
+    left: 10px;
+}
+
+.nexa-compact-nav-next {
+    right: 10px;
+}
+
+.nexa-compact-dots {
+    position: absolute;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 6px;
+}
+
+.nexa-compact-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+}
+
+.nexa-compact-dot.is-active {
+    background: #fff;
+}
+
+.nexa-compact-header {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.nexa-compact-tags {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.nexa-compact-tag {
+    background: #f1f5f9;
+    color: #475569;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.nexa-compact-title {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0 0 8px;
+    color: #0f172a;
+}
+
+.nexa-compact-location {
+    font-size: 14px;
+    color: #64748b;
+    margin: 0 0 16px;
+}
+
+.nexa-compact-price {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--nexa-secondary-color, #16a34a);
+}
+
+.nexa-compact-stats {
+    display: flex;
+    gap: 24px;
+    padding: 16px 0;
+    border-bottom: 1px solid #e2e8f0;
+    margin-bottom: 20px;
+}
+
+.nexa-compact-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.nexa-compact-stat-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.nexa-compact-stat-label {
+    font-size: 12px;
+    color: #64748b;
+}
+
+.nexa-compact-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 20px;
+}
+
+.nexa-compact-tab {
+    padding: 10px 20px;
+    background: #f8fafc;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.nexa-compact-tab.is-active {
+    background: var(--nexa-primary-color, #4f46e5);
+    color: #fff;
+}
+
+.nexa-compact-tab-content {
+    padding: 20px 0;
+}
+
+.nexa-compact-description {
+    color: #475569;
+    line-height: 1.7;
+}
+
+.nexa-compact-details-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.nexa-compact-details-table td {
+    padding: 10px 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.nexa-compact-details-table td:first-child {
+    color: #64748b;
+    width: 40%;
+}
+
+.nexa-compact-details-table td:last-child {
+    color: #0f172a;
+    font-weight: 500;
+}
+
+.nexa-compact-floor-plans {
+    margin-top: 20px;
+}
+
+.nexa-compact-floor-plans h4 {
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0 0 10px;
+}
+
+.nexa-compact-floor-plans a {
+    display: block;
+    padding: 8px 0;
+    color: var(--nexa-primary-color, #4f46e5);
+    text-decoration: none;
+    font-size: 13px;
+}
+
+.nexa-compact-address {
+    font-size: 14px;
+    color: #64748b;
+    margin: 0 0 16px;
+}
+
+/* Minimal Single Property */
+.nexa-minimal-single {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.nexa-minimal-gallery {
+    position: relative;
+    height: 450px;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 32px;
+}
+
+.nexa-minimal-gallery img.nexa-gallery-slide {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.nexa-minimal-gallery img.is-active {
+    opacity: 1;
+}
+
+.nexa-minimal-gallery-nav {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 8px 16px;
+    border-radius: 30px;
+}
+
+.nexa-minimal-gallery-nav button {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    color: #0f172a;
+}
+
+.nexa-minimal-gallery-nav span {
+    font-size: 13px;
+    color: #64748b;
+}
+
+.nexa-minimal-content {
+    padding: 0 20px;
+}
+
+.nexa-minimal-header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    margin: 0 0 8px;
+    color: #0f172a;
+}
+
+.nexa-minimal-location {
+    font-size: 15px;
+    color: #64748b;
+    margin: 0 0 20px;
+}
+
+.nexa-minimal-price-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.nexa-minimal-price {
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--nexa-secondary-color, #16a34a);
+}
+
+.nexa-minimal-badges {
+    display: flex;
+    gap: 8px;
+}
+
+.nexa-minimal-badges span {
+    background: #f1f5f9;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #475569;
+}
+
+.nexa-minimal-specs {
+    display: flex;
+    gap: 32px;
+    padding: 20px 0;
+    border-top: 1px solid #e2e8f0;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.nexa-minimal-specs > div {
+    display: flex;
+    flex-direction: column;
+}
+
+.nexa-minimal-specs strong {
+    font-size: 24px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.nexa-minimal-specs span {
+    font-size: 12px;
+    color: #64748b;
+}
+
+.nexa-minimal-divider {
+    border: none;
+    border-top: 1px solid #e2e8f0;
+    margin: 24px 0;
+}
+
+.nexa-minimal-description {
+    color: #475569;
+    line-height: 1.8;
+}
+
+.nexa-minimal-map-section h2,
+.nexa-minimal-floor-plans h2 {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 12px;
+}
+
+.nexa-minimal-address {
+    font-size: 14px;
+    color: #64748b;
+    margin: 0 0 16px;
+}
+
+.nexa-minimal-floor-plans a {
+    display: inline-block;
+    margin-right: 16px;
+    color: var(--nexa-primary-color, #4f46e5);
+    text-decoration: none;
+    font-size: 14px;
+}
+
+/* Bold Single Property */
+.nexa-bold-single {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.nexa-bold-hero {
+    position: relative;
+    height: 550px;
+    background-size: cover;
+    background-position: center;
+    margin-bottom: 0;
+}
+
+.nexa-bold-hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.3) 100%);
+}
+
+.nexa-bold-hero-content {
+    position: absolute;
+    bottom: 60px;
+    left: 60px;
+    right: 60px;
+    color: #fff;
+}
+
+.nexa-bold-category-tag {
+    display: inline-block;
+    background: var(--nexa-primary-color, #4f46e5);
+    padding: 8px 20px;
+    border-radius: 30px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    margin-bottom: 16px;
+}
+
+.nexa-bold-hero-title {
+    font-size: 48px;
+    font-weight: 800;
+    margin: 0 0 12px;
+    line-height: 1.1;
+}
+
+.nexa-bold-hero-location {
+    font-size: 18px;
+    opacity: 0.9;
+    margin: 0 0 20px;
+}
+
+.nexa-bold-hero-price {
+    font-size: 40px;
+    font-weight: 800;
+}
+
+.nexa-bold-features-banner {
+    display: flex;
+    justify-content: center;
+    gap: 60px;
+    padding: 32px 40px;
+    background: #0f172a;
+    color: #fff;
+}
+
+.nexa-bold-feature-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.nexa-bold-feature-icon {
+    font-size: 32px;
+}
+
+.nexa-bold-feature-value {
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.nexa-bold-feature-label {
+    font-size: 12px;
+    opacity: 0.7;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.nexa-bold-gallery-section {
+    padding: 48px 60px;
+}
+
+.nexa-bold-gallery-section h2 {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0 0 24px;
+}
+
+.nexa-bold-gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 16px;
+}
+
+.nexa-bold-gallery-item {
+    height: 200px;
+    object-fit: cover;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.nexa-bold-gallery-item:hover {
+    transform: scale(1.02);
+}
+
+.nexa-bold-description-section {
+    padding: 48px 60px;
+    background: #f8fafc;
+}
+
+.nexa-bold-section-header h2 {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0 0 20px;
+}
+
+.nexa-bold-description {
+    color: #475569;
+    line-height: 1.8;
+    font-size: 16px;
+    max-width: 800px;
+}
+
+.nexa-bold-details-section {
+    padding: 48px 60px;
+}
+
+.nexa-bold-details-section h2 {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0 0 24px;
+}
+
+.nexa-bold-details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.nexa-bold-detail-card {
+    background: #f8fafc;
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.nexa-bold-detail-label {
+    font-size: 12px;
+    color: #64748b;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+
+.nexa-bold-detail-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.nexa-bold-map-section {
+    padding: 48px 60px;
+    background: #f8fafc;
+}
+
+.nexa-bold-map-section h2 {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0 0 16px;
+}
+
+.nexa-bold-address {
+    font-size: 16px;
+    color: #64748b;
+    margin: 0 0 20px;
+}
+
+.nexa-bold-floor-plans {
+    padding: 48px 60px;
+}
+
+.nexa-bold-floor-plans h2 {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0 0 24px;
+}
+
+.nexa-bold-floor-plans-list {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.nexa-bold-floor-plan-btn {
+    display: inline-block;
+    padding: 14px 24px;
+    background: var(--nexa-primary-color, #4f46e5);
+    color: #fff;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    transition: transform 0.2s;
+}
+
+.nexa-bold-floor-plan-btn:hover {
+    transform: translateY(-2px);
+}
+
+/* Responsive Adjustments for Single Property Layouts */
+@media (max-width: 1024px) {
+    .nexa-modern-content {
+        grid-template-columns: 1fr;
+    }
+    
+    .nexa-modern-info-card {
+        position: relative;
+        bottom: auto;
+        left: auto;
+        margin: -60px 20px 20px;
+        max-width: none;
+    }
+    
+    .nexa-elegant-content {
+        grid-template-columns: 1fr;
+    }
+    
+    .nexa-compact-top {
+        grid-template-columns: 1fr;
+    }
+    
+    .nexa-bold-hero-title {
+        font-size: 36px;
+    }
+    
+    .nexa-bold-features-banner {
+        flex-wrap: wrap;
+        gap: 30px;
+    }
+}
+
+@media (max-width: 768px) {
+    .nexa-modern-hero {
+        height: 350px;
+    }
+    
+    .nexa-modern-stats-bar {
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+    
+    .nexa-elegant-header {
+        flex-direction: column;
+        gap: 16px;
+    }
+    
+    .nexa-elegant-price-wrapper {
+        text-align: left;
+    }
+    
+    .nexa-bold-hero {
+        height: 400px;
+    }
+    
+    .nexa-bold-hero-content {
+        left: 20px;
+        right: 20px;
+        bottom: 40px;
+    }
+    
+    .nexa-bold-hero-title {
+        font-size: 28px;
+    }
+    
+    .nexa-bold-gallery-section,
+    .nexa-bold-description-section,
+    .nexa-bold-details-section,
+    .nexa-bold-map-section,
+    .nexa-bold-floor-plans {
+        padding: 32px 20px;
+    }
+}

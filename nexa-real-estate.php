@@ -273,12 +273,20 @@ function nexa_re_upload_media( WP_REST_Request $request ) {
 
 // Frontend styles for Nexa single Property pages.
 function nexa_re_enqueue_frontend_assets() {
-    // Only load on our single-property view.
+    // Always load the layout styles for property cards and single pages
+    wp_enqueue_style(
+        'nexa-re-layouts',
+        NEXA_RE_PLUGIN_URL . 'assets/css/nexa-layouts.css',
+        [],
+        NEXA_RE_VERSION
+    );
+
+    // Only load single property specific styles on our single-property view.
     if ( get_query_var( 'nexa_property' ) ) {
         wp_enqueue_style(
             'nexa-re-single-property',
             NEXA_RE_PLUGIN_URL . 'assets/css/nexa-single-property.css',
-            [],
+            [ 'nexa-re-layouts' ],
             NEXA_RE_VERSION
         );
     }
@@ -429,6 +437,10 @@ class Nexa_Real_Estate_Plugin {
         }
 
         set_query_var( 'nexa_property', $result['data'] );
+
+        // Get single property layout from API config
+        $single_property_layout = $api->get_single_property_layout();
+        set_query_var( 'nexa_single_property_layout', $single_property_layout );
 
         return NEXA_RE_PLUGIN_DIR . 'views/property-single.php';
     }
