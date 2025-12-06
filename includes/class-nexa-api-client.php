@@ -173,4 +173,78 @@ class Nexa_RE_Api_Client {
         // Shortcodes will use sensible defaults
         return null;
     }
+
+    /**
+     * Fetch all shortcode configurations from the SaaS API.
+     *
+     * @return array|null The configurations array or null if unavailable.
+     */
+    public function get_all_shortcode_configs() {
+        $cache_key = 'nexa_all_shortcode_configs';
+
+        // Check transient cache
+        $cached = get_transient( $cache_key );
+        if ( false !== $cached ) {
+            return $cached;
+        }
+
+        // Fetch from API
+        $result = $this->request( 'GET', '/shortcode-configs' );
+
+        if ( $result['ok'] && ! empty( $result['data'] ) ) {
+            $configs = $result['data'];
+
+            // Cache the configs for 5 minutes
+            set_transient( $cache_key, $configs, self::CONFIG_CACHE_TTL );
+
+            return $configs;
+        }
+
+        return null;
+    }
+
+    /**
+     * Update shortcode configuration for a specific shortcode.
+     *
+     * @param string $shortcode The shortcode name (e.g., 'nexa_properties', 'nexa_single_property').
+     * @param array  $config    The configuration to update.
+     * @return array API response.
+     */
+    public function update_shortcode_config( $shortcode, array $config ) {
+        // Clear relevant caches
+        delete_transient( 'nexa_all_shortcode_configs' );
+        delete_transient( 'nexa_shortcode_config_' . sanitize_key( $shortcode ) );
+
+        return $this->request( 'PUT', '/shortcode-configs/' . rawurlencode( $shortcode ), [ 'config' => $config ] );
+    }
+
+    /* -------- Layout Configuration Helpers -------- */
+
+    /**
+     * Get the property card layout setting.
+     *
+     * @return string The layout name (default, modern, elegant, compact, minimal, bold).
+     */
+    public function get_property_card_layout() {
+        $config = $this->get_shortcode_config( 'nexa_properties' );
+        $layout = $config['property_card_layout'] ?? 'default';
+
+        // Validate layout
+        $valid_layouts = [ 'default', 'modern', 'elegant', 'compact', 'minimal', 'bold' ];
+        return in_array( $layout, $valid_layouts, true ) ? $layout : 'default';
+    }
+
+    /**
+     * Get the single property page layout setting.
+     *
+     * @return string The layout name (default, modern, elegant, compact, minimal, bold).
+     */
+    public function get_single_property_layout() {
+        $config = $this->get_shortcode_config( 'nexa_single_property' );
+        $layout = $config['single_property_layout'] ?? 'default';
+
+        // Validate layout
+        $valid_layouts = [ 'default', 'modern', 'elegant', 'compact', 'minimal', 'bold' ];
+        return in_array( $layout, $valid_layouts, true ) ? $layout : 'default';
+    }
 }

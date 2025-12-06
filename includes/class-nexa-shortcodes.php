@@ -6,6 +6,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Nexa_RE_Shortcodes {
 
+    /**
+     * Valid property card layout options.
+     */
+    const VALID_CARD_LAYOUTS = [ 'default', 'modern', 'elegant', 'compact', 'minimal', 'bold' ];
+
     public static function register_shortcodes() {
         add_shortcode( 'nexa_properties', [ __CLASS__, 'render_properties' ] );
         add_shortcode( 'nexa_property_search', [ __CLASS__, 'render_property_search' ] );
@@ -18,6 +23,44 @@ class Nexa_RE_Shortcodes {
         }
 
         return home_url( '/properties/' . $id . '/' );
+    }
+
+    /**
+     * Render a property card using the selected layout template.
+     *
+     * @param array  $property       Property data array.
+     * @param string $layout         Layout template name.
+     * @param bool   $show_price     Whether to show price.
+     * @param bool   $show_bedrooms  Whether to show bedrooms.
+     * @param bool   $show_bathrooms Whether to show bathrooms.
+     * @param bool   $show_city      Whether to show city.
+     * @param bool   $show_area      Whether to show area.
+     * @param bool   $show_location  Whether to show address.
+     * @return string The rendered HTML.
+     */
+    protected static function render_property_card( $property, $layout, $show_price, $show_bedrooms, $show_bathrooms, $show_city, $show_area, $show_location ) {
+        // Validate layout
+        if ( ! in_array( $layout, self::VALID_CARD_LAYOUTS, true ) ) {
+            $layout = 'default';
+        }
+
+        $template_path = NEXA_RE_PLUGIN_DIR . 'views/property-cards/' . $layout . '.php';
+
+        // Fallback to default if template doesn't exist
+        if ( ! file_exists( $template_path ) ) {
+            $template_path = NEXA_RE_PLUGIN_DIR . 'views/property-cards/default.php';
+        }
+
+        // Get property URL
+        $detail_url = self::get_property_url( $property );
+
+        // Start output buffering
+        ob_start();
+
+        // Make variables available to the template
+        include $template_path;
+
+        return ob_get_clean();
     }
 
     /**
@@ -350,25 +393,26 @@ class Nexa_RE_Shortcodes {
 
         // Default attributes
         $defaults = [
-            'city'            => '',
-            'category'        => '',
-            'property_type'   => '',
-            'min_price'       => '',
-            'max_price'       => '',
-            'per_page'        => '10',
-            'show_filter'     => 'true',
-            'show_map'        => 'true',
-            'columns'         => '3',
-            'layout'          => 'grid',
-            'card_style'      => 'default',
-            'primary_color'   => '#4f46e5',
-            'secondary_color' => '#16a34a',
-            'show_price'      => 'true',
-            'show_bedrooms'   => 'true',
-            'show_bathrooms'  => 'true',
-            'show_city'       => 'true',
-            'show_area'       => 'true',
-            'show_location'   => 'true',
+            'city'                 => '',
+            'category'             => '',
+            'property_type'        => '',
+            'min_price'            => '',
+            'max_price'            => '',
+            'per_page'             => '10',
+            'show_filter'          => 'true',
+            'show_map'             => 'true',
+            'columns'              => '3',
+            'layout'               => 'grid',
+            'card_style'           => 'default',
+            'property_card_layout' => 'default',
+            'primary_color'        => '#4f46e5',
+            'secondary_color'      => '#16a34a',
+            'show_price'           => 'true',
+            'show_bedrooms'        => 'true',
+            'show_bathrooms'       => 'true',
+            'show_city'            => 'true',
+            'show_area'            => 'true',
+            'show_location'        => 'true',
         ];
 
         // Apply API config
@@ -414,6 +458,11 @@ class Nexa_RE_Shortcodes {
             }
             if ( isset( $config['show_location'] ) ) {
                 $defaults['show_location'] = $config['show_location'] ? 'true' : 'false';
+            }
+            if ( ! empty( $config['property_card_layout'] ) ) {
+                if ( in_array( $config['property_card_layout'], self::VALID_CARD_LAYOUTS, true ) ) {
+                    $defaults['property_card_layout'] = $config['property_card_layout'];
+                }
             }
         }
 
@@ -500,11 +549,12 @@ class Nexa_RE_Shortcodes {
         $show_location  = filter_var( $atts['show_location'], FILTER_VALIDATE_BOOLEAN );
         
         // Layout and styling options
-        $layout          = in_array( $atts['layout'], [ 'grid', 'list' ], true ) ? $atts['layout'] : 'grid';
-        $columns         = max( 1, min( 6, intval( $atts['columns'] ) ) );
-        $card_style      = sanitize_key( $atts['card_style'] );
-        $primary_color   = sanitize_hex_color( $atts['primary_color'] ) ?: '#4f46e5';
-        $secondary_color = sanitize_hex_color( $atts['secondary_color'] ) ?: '#16a34a';
+        $layout              = in_array( $atts['layout'], [ 'grid', 'list' ], true ) ? $atts['layout'] : 'grid';
+        $columns             = max( 1, min( 6, intval( $atts['columns'] ) ) );
+        $card_style          = sanitize_key( $atts['card_style'] );
+        $property_card_layout = in_array( $atts['property_card_layout'], self::VALID_CARD_LAYOUTS, true ) ? $atts['property_card_layout'] : 'default';
+        $primary_color       = sanitize_hex_color( $atts['primary_color'] ) ?: '#4f46e5';
+        $secondary_color     = sanitize_hex_color( $atts['secondary_color'] ) ?: '#16a34a';
 
         // Fetch agency parameters for filter dropdowns
         $city_options          = [];
@@ -544,6 +594,7 @@ class Nexa_RE_Shortcodes {
         if ( $card_style !== 'default' ) {
             $wrapper_classes[] = 'nexa-card-style-' . esc_attr( $card_style );
         }
+        $wrapper_classes[] = 'nexa-card-layout-' . esc_attr( $property_card_layout );
 
         ob_start();
         ?>
@@ -674,65 +725,8 @@ class Nexa_RE_Shortcodes {
                     <div class="nexa-properties-list-column">
                         <div class="nexa-properties-grid nexa-properties-grid-compact">
                             <?php foreach ( $properties as $index => $property ) :
-                                $first_image = '';
-                                if ( ! empty( $property['images'] ) && is_array( $property['images'] ) ) {
-                                    $first_image = $property['images'][0]['url'] ?? '';
-                                }
-
-                                $prop_id     = $property['id'] ?? $index;
-                                $title       = $property['title'] ?? '';
-                                $city        = $property['city'] ?? '';
-                                $category    = $property['category'] ?? '';
-                                $price       = isset( $property['price'] ) ? $property['price'] : null;
-                                $bedrooms    = $property['bedrooms'] ?? null;
-                                $bathrooms   = $property['bathrooms'] ?? null;
-                                $area        = $property['area'] ?? null;
-                                $address     = $property['address'] ?? '';
-                                $detail_url  = self::get_property_url( $property );
-                                ?>
-                                <a class="nexa-property-card" href="<?php echo esc_url( $detail_url ); ?>" data-property-id="<?php echo esc_attr( $prop_id ); ?>">
-                                    <div class="nexa-property-image">
-                                        <?php if ( $first_image ) : ?>
-                                            <img src="<?php echo esc_url( $first_image ); ?>" alt="<?php echo esc_attr( $title ); ?>">
-                                        <?php else : ?>
-                                            <div class="nexa-property-image-placeholder">No image</div>
-                                        <?php endif; ?>
-                                        <?php if ( $category ) : ?>
-                                            <span class="nexa-property-chip"><?php echo esc_html( ucfirst( $category ) ); ?></span>
-                                        <?php endif; ?>
-                                    </div>
-                                    <div class="nexa-property-body">
-                                        <div class="nexa-property-top">
-                                            <h3 class="nexa-property-title"><?php echo esc_html( $title ); ?></h3>
-                                            <?php if ( $show_price && $price ) : ?>
-                                                <div class="nexa-property-price">
-                                                    <?php echo esc_html( number_format_i18n( $price ) ); ?>
-                                                </div>
-                                            <?php endif; ?>
-                                        </div>
-                                        <?php if ( $show_city && $city ) : ?>
-                                            <p class="nexa-property-location"><?php echo esc_html( $city ); ?></p>
-                                        <?php endif; ?>
-                                        <?php if ( $show_location && $address ) : ?>
-                                            <p class="nexa-property-address"><?php echo esc_html( $address ); ?></p>
-                                        <?php endif; ?>
-
-                                        <div class="nexa-property-meta">
-                                            <?php if ( $show_bedrooms && $bedrooms ) : ?>
-                                                <span><?php echo intval( $bedrooms ); ?> Bedrooms</span>
-                                            <?php endif; ?>
-                                            <?php if ( $show_bathrooms && $bathrooms ) : ?>
-                                                <span><?php echo intval( $bathrooms ); ?> Bathrooms</span>
-                                            <?php endif; ?>
-                                            <?php if ( $show_area && $area ) : ?>
-                                                <span><?php echo esc_html( $area ); ?> sqm</span>
-                                            <?php endif; ?>
-                                        </div>
-
-                                        <span class="nexa-property-view-btn">View details</span>
-                                    </div>
-                                </a>
-                            <?php endforeach; ?>
+                                echo self::render_property_card( $property, $property_card_layout, $show_price, $show_bedrooms, $show_bathrooms, $show_city, $show_area, $show_location );
+                            endforeach; ?>
                         </div>
                     </div>
                     <div class="nexa-properties-map-column">
@@ -840,64 +834,8 @@ class Nexa_RE_Shortcodes {
                 <!-- Standard grid layout -->
                 <div class="nexa-properties-grid">
                     <?php foreach ( $properties as $property ) :
-                        $first_image = '';
-                        if ( ! empty( $property['images'] ) && is_array( $property['images'] ) ) {
-                            $first_image = $property['images'][0]['url'] ?? '';
-                        }
-
-                        $title       = $property['title'] ?? '';
-                        $city        = $property['city'] ?? '';
-                        $category    = $property['category'] ?? '';
-                        $price       = isset( $property['price'] ) ? $property['price'] : null;
-                        $bedrooms    = $property['bedrooms'] ?? null;
-                        $bathrooms   = $property['bathrooms'] ?? null;
-                        $area        = $property['area'] ?? null;
-                        $address     = $property['address'] ?? '';
-                        $detail_url  = self::get_property_url( $property );
-                        ?>
-                        <a class="nexa-property-card" href="<?php echo esc_url( $detail_url ); ?>">
-                            <div class="nexa-property-image">
-                                <?php if ( $first_image ) : ?>
-                                    <img src="<?php echo esc_url( $first_image ); ?>" alt="<?php echo esc_attr( $title ); ?>">
-                                <?php else : ?>
-                                    <div class="nexa-property-image-placeholder">No image</div>
-                                <?php endif; ?>
-                                <?php if ( $category ) : ?>
-                                    <span class="nexa-property-chip"><?php echo esc_html( ucfirst( $category ) ); ?></span>
-                                <?php endif; ?>
-                            </div>
-                            <div class="nexa-property-body">
-                                <div class="nexa-property-top">
-                                    <h3 class="nexa-property-title"><?php echo esc_html( $title ); ?></h3>
-                                    <?php if ( $show_price && $price ) : ?>
-                                        <div class="nexa-property-price">
-                                            <?php echo esc_html( number_format_i18n( $price ) ); ?>
-                                        </div>
-                                    <?php endif; ?>
-                                </div>
-                                <?php if ( $show_city && $city ) : ?>
-                                    <p class="nexa-property-location"><?php echo esc_html( $city ); ?></p>
-                                <?php endif; ?>
-                                <?php if ( $show_location && $address ) : ?>
-                                    <p class="nexa-property-address"><?php echo esc_html( $address ); ?></p>
-                                <?php endif; ?>
-
-                                <div class="nexa-property-meta">
-                                    <?php if ( $show_bedrooms && $bedrooms ) : ?>
-                                        <span><?php echo intval( $bedrooms ); ?> Bedrooms</span>
-                                    <?php endif; ?>
-                                    <?php if ( $show_bathrooms && $bathrooms ) : ?>
-                                        <span><?php echo intval( $bathrooms ); ?> Bathrooms</span>
-                                    <?php endif; ?>
-                                    <?php if ( $show_area && $area ) : ?>
-                                        <span><?php echo esc_html( $area ); ?> sqm</span>
-                                    <?php endif; ?>
-                                </div>
-
-                                <span class="nexa-property-view-btn">View details</span>
-                            </div>
-                        </a>
-                    <?php endforeach; ?>
+                        echo self::render_property_card( $property, $property_card_layout, $show_price, $show_bedrooms, $show_bathrooms, $show_city, $show_area, $show_location );
+                    endforeach; ?>
                 </div>
                 <?php endif; ?>
             <?php endif; ?>
