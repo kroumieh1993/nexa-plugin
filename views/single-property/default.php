@@ -64,7 +64,7 @@ $has_location = ! empty( $latitude ) && ! empty( $longitude );
             <span class="nexa-single-pill">🛁 <?php echo intval( $bathrooms ); ?> Bathrooms</span>
         <?php endif; ?>
         <?php if ( $area ) : ?>
-            <span class="nexa-single-pill">📐 <?php echo esc_html( $area ); ?> sq ft</span>
+            <span class="nexa-single-pill">📐 <?php echo esc_html( $area ); ?> sqm</span>
         <?php endif; ?>
     </div>
 </section>
@@ -110,7 +110,7 @@ $has_location = ! empty( $latitude ) && ! empty( $longitude );
     <?php if ( $area ) : ?>
         <div class="nexa-detail-card">
             <p class="nexa-detail-label">Area</p>
-            <p class="nexa-detail-value"><?php echo esc_html( $area ); ?> sq ft</p>
+            <p class="nexa-detail-value"><?php echo esc_html( $area ); ?> sqm</p>
         </div>
     <?php endif; ?>
     <?php if ( $type ) : ?>

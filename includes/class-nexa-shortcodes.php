@@ -460,8 +460,7 @@ class Nexa_RE_Shortcodes {
                 $defaults['show_location'] = $config['show_location'] ? 'true' : 'false';
             }
             if ( ! empty( $config['property_card_layout'] ) ) {
-                $valid_card_layouts = [ 'default', 'modern', 'elegant', 'compact', 'minimal', 'bold' ];
-                if ( in_array( $config['property_card_layout'], $valid_card_layouts, true ) ) {
+                if ( in_array( $config['property_card_layout'], self::VALID_CARD_LAYOUTS, true ) ) {
                     $defaults['property_card_layout'] = $config['property_card_layout'];
                 }
             }
